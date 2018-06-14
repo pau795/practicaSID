@@ -23,6 +23,7 @@ public class WaterMass {
 	
 	public WaterMass () {
 		
+		r= new Random();		
 		setVolume(500 + 500*r.nextDouble());
 		setCapacity(1000);
 		
