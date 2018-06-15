@@ -4,7 +4,12 @@ import java.util.ArrayList;
 
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 
+@SuppressWarnings("serial")
 public class AgenteRio extends Agent{
 	
 	private class MyTicker extends TickerBehaviour{
@@ -20,13 +25,13 @@ public class AgenteRio extends Agent{
 		@Override
 		protected void onTick() {										//Fluir del rio
 			int l =  river.size();
-			for (int i = l - 1; i >= 0; --i) {
-				if(i==0) {
-					WaterMass m = new WaterMass();
-					river.set(0, m);
-				}
-				else river.set(i, river.get(i - 1));
-			}			
+			for (int i = l - 1; i > 0; --i) 
+				river.set(i, river.get(i - 1));
+			
+			// First section is always a new waterMass
+			WaterMass m = new WaterMass();
+			river.set(0, m);
+			
 			for (int i = 0; i < l; ++i) 
 				System.out.print(river.get(i).getVolume() + " ");		//Print del rio a cada tick
 			
@@ -39,6 +44,21 @@ public class AgenteRio extends Agent{
 		
 	
 	protected void setup() {
+		
+	  	// Register the service
+	  	System.out.println("Agent " + getLocalName() + " registering service \"" + "River Sevice");
+	  	try {
+	  		DFAgentDescription dfd = new DFAgentDescription();
+	  		dfd.setName(getAID());
+	  		
+	  		ServiceDescription sd = new ServiceDescription();
+	  		sd.setType("River");
+	  		dfd.addServices(sd);
+	  		DFService.register(this, dfd);
+	  	}
+	  	catch (FIPAException fe) {
+	  		fe.printStackTrace();
+	  	}
 		
 		river = new ArrayList<WaterMass>();
 		

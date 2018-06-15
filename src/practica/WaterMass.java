@@ -1,9 +1,14 @@
 package practica;
 
+import java.io.Serializable;
 import java.util.Random;
 
-public class WaterMass {
+public class WaterMass implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	// Each WaterMass has a volume and a capacity. 
 	// It represents the water that flows through a section of a river.
 	// We assume that every WaterMass has a capacity of 1000
@@ -33,7 +38,19 @@ public class WaterMass {
 		setTotalNitrates(0);
 		setTotalSulfites(0);
 	}
-	
+
+
+	public WaterMass(double wE, double sS, double cOD, double bOD, double tN, double tS) {
+
+		setCapacity(1000);
+		setVolume(wE);
+		setSuspendedSolids(sS);
+		setChemicalOxygenDemand(cOD);
+		setBiologicalOxygenDemand(bOD);
+		setTotalNitrates(tN);
+		setTotalSulfites(tS);
+	}
+
 	public double getVolume() {
 		return volume;
 	}
