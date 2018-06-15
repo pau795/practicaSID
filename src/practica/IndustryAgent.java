@@ -1,11 +1,9 @@
 package practica;
 
-import java.io.IOException;
 import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
@@ -14,6 +12,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 
 
 @SuppressWarnings("serial")
@@ -49,22 +48,6 @@ public class IndustryAgent extends Agent {
 	        }
 	    }
 	}
-	private class ReceiveMessages extends CyclicBehaviour {
-	
-
-		@Override
-		public void action() {
-			
-			ACLMessage msg = blockingReceive();
-			
-			if(msg.getPerformative() == ACLMessage.INFORM_REF && msg.getContent() == "section")
-				riverSection = Integer.valueOf(msg.getUserDefinedParameter("section"));
-			
-			if(msg.getPerformative() == ACLMessage.INFORM_REF && msg.getContent() == "volume")
-				volumeOfSection = Double.valueOf(msg.getUserDefinedParameter("volume"));
-		}
-		
-	}
 	private class ExtractWater extends TickerBehaviour {
 		
 		public ExtractWater(Agent a, long period) {
@@ -79,31 +62,46 @@ public class IndustryAgent extends Agent {
 			msg.addReceiver(riverAID);
 			msg.setContent("volume");
 			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
+			msg.addUserDefinedParameter("volume", String.valueOf(waterVolume));
 			send(msg);
 			
 			// If is possible to extract, do it, and inform
-			while(volumeOfSection < 0) {
-				ReceiveMessages rM = new ReceiveMessages();
-				addBehaviour(rM);
-			}
-			
-			if(volumeOfSection <= waterExtracted) {
-				
-				WaterMass pollutedWater = new WaterMass(waterExtracted, suspendedSolids, chemicalOxygenDemand, biologicalOxygenDemand, totalNitrates, totalSulfites);
-				ACLMessage msgInf = new ACLMessage(ACLMessage.INFORM);
-				msgInf.setSender(getAID());
-				msgInf.addReceiver(riverAID);
-				try {
-					// Sends a WaterMass serialized
-					msg.setContentObject(pollutedWater);
-				} catch (IOException e) {
-					e.printStackTrace();
+			boolean waterAnswerReceived = false;
+			waterExtracted = null;
+			while(!waterAnswerReceived) {
+				ACLMessage msg2 = blockingReceive();
+				if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "volume") {
+					try {
+						waterExtracted = (WaterMass) msg2.getContentObject();
+						polluteWater();
+						waterAnswerReceived = true;
+					} catch (UnreadableException e) {
+						e.printStackTrace();
+					}
 				}
-				send(msgInf);
+				
+				else if(msg2.getPerformative() == ACLMessage.REFUSE && msg2.getContent() == "volume") {
+					waterAnswerReceived = true;
+				}
 			}
+		}
+
+		private void polluteWater() {
 			
-			volumeOfSection = -1;
+			double sS = waterExtracted.getSuspendedSolids();
+			waterExtracted.setSuspendedSolids(sS + suspendedSolids);
 			
+			double cOD = waterExtracted.getChemicalOxygenDemand();
+			waterExtracted.setChemicalOxygenDemand(cOD + chemicalOxygenDemand);
+			
+			double bOD = waterExtracted.getBiologicalOxygenDemand();
+			waterExtracted.setBiologicalOxygenDemand(bOD + biologicalOxygenDemand);
+			
+			double tS = waterExtracted.getTotalSulfites();
+			waterExtracted.setTotalSulfites(tS + totalSulfites);
+			
+			double tN = waterExtracted.getTotalNitrates();
+			waterExtracted.setTotalNitrates(tN + totalNitrates);
 		}
 		
 	}
@@ -111,15 +109,15 @@ public class IndustryAgent extends Agent {
 	static private AID riverAID;
 	static private int riverSection;
 	
-	static private double waterExtracted;
+	static private double waterVolume;
 	static private double suspendedSolids;
 	static private double chemicalOxygenDemand;
 	static private double biologicalOxygenDemand;
 	static private double totalSulfites;
 	static private double totalNitrates;
 	
-	private Random r;
-	private double volumeOfSection;
+	private Random r = new Random();
+	private WaterMass waterExtracted;
 	
 	protected void setup() {
 		
@@ -133,15 +131,17 @@ public class IndustryAgent extends Agent {
 		send(msg);
 		
 		// Register the number of section in which the industry will extract water
-		ReceiveMessages rM = new ReceiveMessages();
-		addBehaviour(rM);
+		riverSection = -1;
+		while(riverSection != -1) {
+			ACLMessage msg2 = blockingReceive();
+			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "section")
+				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
+		}
 		
 		// The volume of water that this industry extracts from the river and how much it 
 		// pollutes the water remains constant during all the execution
 
-		r = new Random();
-		waterExtracted = 1000*r.nextDouble();
-		
+		waterVolume = 1000*r.nextDouble();
 		suspendedSolids = r.nextDouble()*200;
 		chemicalOxygenDemand = r.nextDouble()*200;
 		biologicalOxygenDemand = r.nextDouble()*200;
@@ -154,7 +154,7 @@ public class IndustryAgent extends Agent {
 		addBehaviour(eW);
 		
 		System.out.println("Industry extracts water from section: " + riverSection);
-		System.out.println("Industry extracts " + waterExtracted + " liters of water." );
+		System.out.println("Industry extracts " + waterVolume + " liters of water." );
 		
 		System.out.println();
 	}

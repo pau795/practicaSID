@@ -107,4 +107,16 @@ public class WaterMass implements Serializable {
 		this.totalNitrates = totalNitrates;
 	}
 	
+	public String toString() {
+		
+		String s = "Total Capacity: " + capacity + "\n";
+		s += "Volume: " + volume + "\n";
+		s += "Suspended Solids: " + suspendedSolids + "\n";
+		s += "Chemical Oxygen Demand: " + chemicalOxygenDemand + "\n";
+		s += "Biological Oxygen Demand: " + biologicalOxygenDemand + "\n";
+		s += "Total Sulfites: " + totalSulfites + "\n";
+		s += "Total Nitrates: " + totalNitrates;
+		return s;
+	}
+	
 }
