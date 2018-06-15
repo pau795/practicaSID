@@ -3,23 +3,22 @@ package practica;
 import java.util.ArrayList;
 
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.lang.acl.ACLMessage;
 
 @SuppressWarnings("serial")
 public class AgenteRio extends Agent{
 	
 	private class MyTicker extends TickerBehaviour{
 		
-		private ArrayList<WaterMass> river;
-		
-		public MyTicker(Agent a, long period, ArrayList<WaterMass> r) {
+		public MyTicker(Agent a, long period) {
 			
 			super(a, period);
-			this.river=r;
 		}
 
 		@Override
@@ -39,10 +38,65 @@ public class AgenteRio extends Agent{
 		}
 	}	
 	
+	
+	private class MsgRiver extends CyclicBehaviour {
+		public MsgRiver(Agent a) {
+			super(a);
+		}
+		
+		@Override
+		public void action() {
+			try {
+				ACLMessage  msg = myAgent.receive();
+				if (msg != null) {
+					ACLMessage reply = msg.createReply();
+					if (msg.getPerformative()== ACLMessage.QUERY_REF){
+						String content = msg.getContent();
+						if (content != null && content.equals("section")) {
+							reply.addReceiver(msg.getSender());
+							reply.setPerformative(ACLMessage.INFORM_REF);
+							reply.setContent("section");
+							reply.addUserDefinedParameter("section",String.valueOf(sections));
+						}
+						else if (content != null && content.equals("volume")) {
+							int s =Integer.valueOf(msg.getUserDefinedParameter("section"));
+							double v = Double.valueOf(msg.getUserDefinedParameter("volume"));
+							WaterMass w = river.get(s);
+							if (w.getVolume() >= v) {
+								WaterMass wr = new WaterMass(v, w.getSuspendedSolids(), w.getChemicalOxygenDemand(), w.getBiologicalOxygenDemand(), w.getTotalNitrates(), w.getTotalSulfites());
+								w.setVolume(w.getVolume()-v);
+								reply.addReceiver(msg.getSender());
+								reply.setPerformative(ACLMessage.INFORM_REF);
+								reply.setContent("volume");
+								reply.setContentObject(wr);
+							}
+							else {
+								reply.addReceiver(msg.getSender());
+								reply.setPerformative(ACLMessage.REFUSE);
+								reply.setContent("The river section does not contain that volume of water");
+							}
+						}
+					}
+					else {
+						reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+						reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");   
+					}
+					send(reply);
+				}
+				else block();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
+	}
+	
+	
 	private ArrayList<WaterMass> river;
 	private int sections; //longitud rio;
 		
-	
 	protected void setup() {
 		
 	  	// Register the service
@@ -52,6 +106,7 @@ public class AgenteRio extends Agent{
 	  		dfd.setName(getAID());
 	  		
 	  		ServiceDescription sd = new ServiceDescription();
+	  		sd.setName("River");
 	  		sd.setType("River");
 	  		dfd.addServices(sd);
 	  		DFService.register(this, dfd);
@@ -64,13 +119,17 @@ public class AgenteRio extends Agent{
 		
 		Object[] args = getArguments();
 		if (args.length == 1 ) sections = Integer.valueOf((String) args[0]); //la longitud del rio viene determinada por el primer parametro
-		else sections = 100; //longitud predeterminada si no hay parametros	
+		else sections = 20; //longitud predeterminada si no hay parametros	
 		
 		for (int i = 0; i < sections; ++i)					
 			river.add(new WaterMass());		
 		
-		MyTicker ticker = new MyTicker(this, 3000, river);
+		MyTicker ticker = new MyTicker(this, 3000);
 		addBehaviour(ticker);
+		
+		MsgRiver mr = new MsgRiver(this);
+		addBehaviour(mr);
+		
 		
 		for (int i=0; i<sections; ++i) 
 			System.out.print(river.get(i).getVolume() + " ");  //Test del rio inicial
