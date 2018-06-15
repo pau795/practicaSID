@@ -1,1 +1,5 @@
-javac -cp lib/jade.jar src/PaqueteSID/MassaAgua.java src/PaqueteSID/impl/DefaultMassaAgua.java -d classes src/practica/AgenteRio.java
+javac -cp lib/jade.jar src/practica/WaterMass.java -d classes src/practica/AgenteRio.java
+
+javac -cp lib/jade.jar src/practica/WaterMass.java -d classes src/practica/IndustryAgent.java
+
+java jade.Boot -gui
