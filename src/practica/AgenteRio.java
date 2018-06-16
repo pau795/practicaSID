@@ -60,6 +60,14 @@ public class AgenteRio extends Agent{
 							reply.setInReplyTo("section");
 							System.out.println("Secciones Enviadas");
 						}
+						else if (content != null && content.equals("capacity")) {
+							reply.addReceiver(msg.getSender());
+							reply.setPerformative(ACLMessage.INFORM_REF);
+							reply.setContent("capacity");
+							reply.addUserDefinedParameter("capacity",String.valueOf(river.get(0).getCapacity()));
+							reply.setInReplyTo("capacity");
+							System.out.println("Capacidad Enviada");
+						}
 						else if (content != null && content.equals("volume")) {
 							
 							int s =Integer.valueOf(msg.getUserDefinedParameter("section"));
@@ -79,6 +87,26 @@ public class AgenteRio extends Agent{
 								reply.setPerformative(ACLMessage.REFUSE);
 								reply.setContent("The river section does not contain that volume of water");
 								reply.setInReplyTo("volume");
+							}
+						}
+					}
+					else if (msg.getPerformative()== ACLMessage.QUERY_IF){
+						String content = msg.getContent();
+						if (content != null  && msg.getConversationId().equals("purified")) {
+							int s = Integer.valueOf(msg.getUserDefinedParameter("section"));
+							WaterMass m = (WaterMass) msg.getContentObject();
+							if (river.get(s).getVolume() + m.getVolume() <= river.get(s).getCapacity()) {
+								river.set(s,WaterMass.mergeWater(m, river.get(s)));
+								reply.addReceiver(msg.getSender());
+								reply.setPerformative(ACLMessage.CONFIRM);
+								reply.setContent("Water mass recived succesfully");
+								reply.setConversationId("purified");
+							}
+							else {
+								reply.addReceiver(msg.getSender());
+								reply.setPerformative(ACLMessage.REFUSE);
+								reply.setContent("Is not possible to pour that volume of water");
+								reply.setConversationId("purified");
 							}
 						}
 					}

@@ -50,7 +50,18 @@ public class WaterMass implements Serializable {
 		setTotalNitrates(tN);
 		setTotalSulfites(tS);
 	}
-
+	
+	//This method merges two WaterMasses,returning the addition of all the attributes of s+d, except the maximum capacity, which remains constant. 
+	public static WaterMass mergeWater(WaterMass s, WaterMass d) {
+		d.setVolume(d.getVolume()+s.getVolume());
+		d.setSuspendedSolids(d.getSuspendedSolids()+s.getSuspendedSolids());
+		d.setChemicalOxygenDemand(d.getChemicalOxygenDemand()+s.getChemicalOxygenDemand());
+		d.setBiologicalOxygenDemand(d.getBiologicalOxygenDemand()+s.getBiologicalOxygenDemand());
+		d.setTotalNitrates(d.getTotalNitrates()+s.getTotalNitrates());
+		d.setTotalSulfites(d.getTotalSulfites()+s.getTotalSulfites());
+		return d;
+	}
+	
 	public double getVolume() {
 		return volume;
 	}
