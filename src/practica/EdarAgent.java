@@ -1,14 +1,11 @@
 package practica;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Queue;
 import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -69,6 +66,7 @@ public class EdarAgent extends Agent{
 			while (!answer) {
 				ACLMessage msg2 = blockingReceive(3000);
 				answer=true;
+				
 				if(msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId() == "purified") {
 					purifiedWater.setVolume(purifiedWater.getVolume()-m.getVolume());
 					purifiedWater.setSuspendedSolids(purifiedWater.getSuspendedSolids()-m.getSuspendedSolids());
@@ -76,7 +74,7 @@ public class EdarAgent extends Agent{
 					purifiedWater.setBiologicalOxygenDemand(purifiedWater.getBiologicalOxygenDemand()-m.getBiologicalOxygenDemand());
 					purifiedWater.setTotalNitrates(purifiedWater.getTotalNitrates()-m.getTotalNitrates());
 					purifiedWater.setTotalSulfites(purifiedWater.getTotalSulfites()-m.getTotalSulfites());
-					System.out.println(m.getVolume()+" liters of were poured to the river successfully");
+					System.out.println("EDAR has poured " + m.getVolume() + " liters to the river successfully");
 				}
 				else System.out.println("Is not possible to pour water to the river");
 			}
@@ -95,7 +93,6 @@ public class EdarAgent extends Agent{
 			
 	}
 	
-	@SuppressWarnings("serial")
 	private class MessageReciver extends CyclicBehaviour {
 
 		public MessageReciver(Agent a) {
@@ -115,13 +112,13 @@ public class EdarAgent extends Agent{
 							if (pollutedWater.getVolume() + m.getVolume() <= pollutedWater.getCapacity()) {
 								pollutedWater=WaterMass.mergeWater(m, pollutedWater);
 								reply.setPerformative(ACLMessage.CONFIRM);
-								reply.setContent("Water mass recived succesfully");
+								reply.setContent("The EDAR has received a water mass succesfully");
 								reply.setConversationId("dump");
 								send(reply);
 							}
 							else {
 								reply.setPerformative(ACLMessage.REFUSE);
-								reply.setContent("The polluted water tank cannot recive that volume of water");
+								reply.setContent("The polluted water tank cannot receive that volume of water");
 								reply.setConversationId("dump");
 								send(reply);
 							}		
@@ -187,7 +184,7 @@ public class EdarAgent extends Agent{
 	        // Search the river
 	        try {
 	            results = DFService.search(this, dfd, sc );
-	            System.out.println("Searching The river");
+	            System.out.println("EDAR searching the river");
 	        } catch (FIPAException e) {
 	            // TODO Auto-generated catch block
 	            e.printStackTrace();
@@ -195,10 +192,10 @@ public class EdarAgent extends Agent{
 	        if (results.length > 0) {
 	            DFAgentDescription dfd2 = results[0];
 	            riverAID = dfd2.getName();
-		        System.out.println("The AID of the river has been found and it is: " + riverAID);
+		        System.out.println("EDAR has found the AID of the river and it is: " + riverAID.getLocalName());
 	        }
 	        else {
-	        	System.out.println("River not found");
+	        	System.out.println("EDAR hasn't found the river.");
 	        }
         }
 		
@@ -214,12 +211,12 @@ public class EdarAgent extends Agent{
 			msg.addReceiver(riverAID);
 			msg.setContent("section");
 			send(msg);
-			System.out.println("Request de section");
+			System.out.println("EDAR request the number of sections");
 			
 			ACLMessage msg2 = blockingReceive(3000);
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent().equals("section"))
 				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
-				System.out.println("seccion assignada " + riverSection);
+				System.out.println("EDAR has been assigned to the section " + riverSection);
 		}
 	}
 	
@@ -240,7 +237,7 @@ public class EdarAgent extends Agent{
 	}
 	
 	private void registerAgent() throws FIPAException {
-		System.out.println("Agent " + getLocalName() + " registering Edar Sevice");
+		System.out.println("Agent " + getLocalName() + " registering EDAR Sevice");
 	  	DFAgentDescription dfd = new DFAgentDescription();
 	  	dfd.setName(getAID());
   		ServiceDescription sd = new ServiceDescription();

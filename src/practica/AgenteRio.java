@@ -1,5 +1,6 @@
 package practica;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import jade.core.Agent;
@@ -32,7 +33,7 @@ public class AgenteRio extends Agent{
 			river.set(0, m);
 			
 			for (int i = 0; i < l; ++i) 
-				System.out.print(river.get(i).getVolume() + " ");		//Print del rio a cada tick
+				System.out.print(format.format(river.get(i).getVolume()) + " ");		//Print del rio a cada tick
 			
 			System.out.println("");
 		}
@@ -50,42 +51,57 @@ public class AgenteRio extends Agent{
 				ACLMessage  msg = myAgent.receive();
 				if (msg != null) {
 					ACLMessage reply = msg.createReply();
-					if (msg.getPerformative()== ACLMessage.QUERY_REF){
+					
+					// If river receives a QUERY_REF
+					if (msg.getPerformative() == ACLMessage.QUERY_REF){
 						String content = msg.getContent();
+						
+						// An agent ask for the number of sections
 						if (content != null && content.equals("section")) {
 							reply.setPerformative(ACLMessage.INFORM_REF);
 							reply.setContent("section");
 							reply.addUserDefinedParameter("section",String.valueOf(sections));
 							reply.setInReplyTo("section");
-							System.out.println("Secciones Enviadas");
+							System.out.println("Number of sections sended from the river to " + msg.getSender().getLocalName());
 						}
+						
+						// An agent asks for the capacity of a section of the river
 						else if (content != null && content.equals("capacity")) {
 							reply.setPerformative(ACLMessage.INFORM_REF);
 							reply.setContent("capacity");
 							reply.addUserDefinedParameter("capacity",String.valueOf(river.get(0).getCapacity()));
 							reply.setInReplyTo("capacity");
-							System.out.println("Capacidad Enviada");
+							System.out.println("Capacity sended from the river to " + msg.getSender().getLocalName());
 						}
+						
+						// An agent asks for the current volume of the section received as parameter
 						else if (content != null && content.equals("volume")) {
 							
-							int s =Integer.valueOf(msg.getUserDefinedParameter("section"));
+							int s = Integer.valueOf(msg.getUserDefinedParameter("section"));
 							double v = Double.valueOf(msg.getUserDefinedParameter("volume"));
 							WaterMass w = river.get(s);
 							
+							// The river has been requested for a available volume of water
 							if (w.getVolume() >= v) {
 								WaterMass wr = new WaterMass(v, w.getSuspendedSolids(), w.getChemicalOxygenDemand(), w.getBiologicalOxygenDemand(), w.getTotalNitrates(), w.getTotalSulfites());
 								w.setVolume(w.getVolume()-v);
 								reply.setPerformative(ACLMessage.INFORM_REF);
 								reply.setContentObject(wr);
 								reply.setInReplyTo("volume");
+								System.out.println("The river section has the volume of water that " + msg.getSender().getLocalName() + " has requested.");
 							}
+							
+							
+							// The river has been requested for a non available volume of water
 							else {
 								reply.setPerformative(ACLMessage.REFUSE);
-								reply.setContent("The river section does not contain that volume of water");
+								reply.setContent("The river section does not contain the volume of water that " + msg.getSender().getLocalName() + " has requested.");
 								reply.setInReplyTo("volume");
+								System.out.println("The river section has NOT the volume of water that " + msg.getSender().getLocalName() + " has requested.");
 							}
 						}
 					}
+					
 					else if (msg.getPerformative()== ACLMessage.QUERY_IF){
 						String content = msg.getContent();
 						if (content != null  && msg.getConversationId().equals("purified")) {
@@ -124,6 +140,7 @@ public class AgenteRio extends Agent{
 	
 	private ArrayList<WaterMass> river;
 	private int sections; //longitud rio;
+	DecimalFormat format = new DecimalFormat("0.00");
 		
 	protected void setup() {
 		
@@ -163,12 +180,12 @@ public class AgenteRio extends Agent{
 		for (int i=0; i<sections; ++i) 
 			System.out.print(river.get(i).getVolume() + " ");  //Test del rio inicial
 		
-		System.out.println();
+		System.out.println("");
 	}
 	
 	protected void takeDown() {
 		for (int i = 0; i < sections; ++i) 
-			System.out.print(river.get(i).getVolume() + " ");
+			System.out.print(format.format(river.get(i).getVolume()) + " ");
 		
 		System.out.println();
 	}

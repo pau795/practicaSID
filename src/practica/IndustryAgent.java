@@ -40,15 +40,18 @@ public class IndustryAgent extends Agent {
 			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
 			msg.addUserDefinedParameter("volume", String.valueOf(waterVolume));
 			send(msg);
-			System.out.println("Trying to extract "+ waterVolume +"liters of water");
+			System.out.println("Industry " + getLocalName() + " trying to extract "+ waterVolume +" liters of water");
+
 			// If is possible to extract, do it, and inform
 			waterExtracted = null;
-			ACLMessage msg2 = blockingReceive();
+			ACLMessage msg2 = blockingReceive(3000);
+			
+			// Water mass sent from the river to the industry in order to be extracted
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getInReplyTo().equals("volume")) {
 				try {
 					waterExtracted = (WaterMass) msg2.getContentObject();
 					polluteWater();
-					System.out.println("Water Received and polluted");
+					System.out.println("Industry " + getLocalName() + " has received and polluted the water.");
 				} catch (UnreadableException e) {
 					e.printStackTrace();
 				}
@@ -56,8 +59,8 @@ public class IndustryAgent extends Agent {
 		}
 
 		private void managePollutedWater() {
+			
 			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
-			msg.setContent("dump");
 			msg.setSender(getAID());
 			msg.addReceiver(EDARAID);
 			try {
@@ -67,11 +70,12 @@ public class IndustryAgent extends Agent {
 				e.printStackTrace();
 			}
 			send(msg);			
-			System.out.println("sending water to edar");
-			ACLMessage msg2 = blockingReceive();
+			System.out.println("Industry " + getLocalName() + " requesting to dump " + waterExtracted.getVolume()+" liters of water to the EDAR");
+
+			ACLMessage msg2 = blockingReceive(3000);
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId().equals("dump")) {
+				System.out.println("Industry " + getLocalName() + " dump " + waterExtracted.getVolume()+" liters of water to the EDAR");
 				waterExtracted = null;
-				System.out.println("Water dumped");
 			}
 		}
 
@@ -112,18 +116,14 @@ public class IndustryAgent extends Agent {
 	
 	protected void setup() {
 		
+		setIndustryParameters();
 		searchRiver();
 		searchEDAR();
 		registerSection();
-		setIndustryParameters();
 		
 		// Register the behavior of the Agent -> Extract water
 		ExtractWater eW = new ExtractWater(this, 5000);
 		addBehaviour(eW);
-		
-		System.out.println("Industry extracts water from section: " + riverSection);
-		System.out.println("Industry extracts " + waterVolume + " liters of water." );
-		System.out.println();
 	}
 
 
@@ -151,12 +151,13 @@ public class IndustryAgent extends Agent {
 			msg.addReceiver(riverAID);
 			msg.setContent("section");
 			send(msg);
-			System.out.println("Request de section");
+			System.out.println("Industry " + getLocalName() + " has requested the number of sections of the river");
 			
 			ACLMessage msg2 = blockingReceive(3000);
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent().equals("section"))
 				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
-				System.out.println("seccio assignada " + riverSection);
+			System.out.println("Industry " + getLocalName() + " extracts water from section " + riverSection + " of the river");
+			System.out.println("Industry " + getLocalName() + "  extracts " + waterVolume + " liters of water." );
 		}
 	}
 
@@ -178,7 +179,7 @@ public class IndustryAgent extends Agent {
 	        // Search the river
 	        try {
 	            results = DFService.search(this, dfd, sc );
-	            System.out.println("Searching The river");
+	            System.out.println("Industry " + getLocalName() + " is searching the river");
 	        } catch (FIPAException e) {
 	            // TODO Auto-generated catch block
 	            e.printStackTrace();
@@ -186,10 +187,10 @@ public class IndustryAgent extends Agent {
 	        if (results.length > 0) {
 	            DFAgentDescription dfd2 = results[0];
 	            riverAID = dfd2.getName();
-		        System.out.println("The AID of the river has been found and it is: " + riverAID);
+	            System.out.println("Industry " + getLocalName() + " has found the AID of the river and it is: " + riverAID.getLocalName());
 	        }
 	        else {
-	        	System.out.println("River not found");
+	        	System.out.println("Industry " + getLocalName() + " hasn't found the river.");
 	        }
         }
 		
@@ -214,7 +215,7 @@ public class IndustryAgent extends Agent {
 	        // Search the river
 	        try {
 	            results = DFService.search(this, dfd, sc );
-	            System.out.println("Searching the EDAR");
+	            System.out.println("Industry " + getLocalName() + " is searching the EDAR");
 	        } catch (FIPAException e) {
 	            // TODO Auto-generated catch block
 	            e.printStackTrace();
@@ -222,10 +223,10 @@ public class IndustryAgent extends Agent {
 	        if (results.length > 0) {
 	            DFAgentDescription dfd2 = results[0];
 	            EDARAID = dfd2.getName();
-		        System.out.println("The AID of the EDAR has been found and it is: " + EDARAID);
+	            System.out.println("Industry " + getLocalName() + " has found the AID of the EDAR and it is: " + EDARAID.getLocalName());
 	        }
 	        else {
-	        	System.out.println("EDAR not found");
+	        	System.out.println("Industry " + getLocalName() + " hasn't found the EDAR.");
 	        }
         }
 	}
