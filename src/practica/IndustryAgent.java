@@ -103,6 +103,7 @@ public class IndustryAgent extends Agent {
 	private AID riverAID;
 	private AID EDARAID;
 	private int riverSection;
+	static private long agents = 0;
 	
 	static private double waterVolume;
 	static private double suspendedSolids;
@@ -111,12 +112,14 @@ public class IndustryAgent extends Agent {
 	static private double totalSulfites;
 	static private double totalNitrates;
 	
-	private Random r = new Random();
+	private Random r; 
 	private WaterMass waterExtracted;
 	
 	
 	protected void setup() {
 		
+		agents += 1;
+		r = new Random(agents);
 		setIndustryParameters();
 		searchRiver();
 		searchEDAR();

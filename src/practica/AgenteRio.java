@@ -178,7 +178,7 @@ public class AgenteRio extends Agent{
 		
 		
 		for (int i=0; i<sections; ++i) 
-			System.out.print(river.get(i).getVolume() + " ");  //Test del rio inicial
+			System.out.print(format.format(river.get(i).getVolume()) + " ");  //Test del rio inicial
 		
 		System.out.println("");
 	}
