@@ -229,13 +229,14 @@ public class EdarAgent extends Agent{
 		msg.setSender(getAID());
 		msg.addReceiver(riverAID);
 		msg.setContent("capacity");
+		msg.setInReplyTo("capacity");
 		send(msg);
 		
 		sectionCapacity = -1;
 		while(sectionCapacity == -1) {
 			ACLMessage msg2 = blockingReceive(3000);
-			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "capacity")
-				sectionCapacity = Double.valueOf(msg2.getUserDefinedParameter("section"));
+			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent().equals("capacity"))
+				sectionCapacity = Double.valueOf(msg2.getUserDefinedParameter("capacity"));
 		}
 	}
 	
