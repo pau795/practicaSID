@@ -31,10 +31,10 @@ public class AgenteRio extends Agent{
 			WaterMass m = new WaterMass();
 			river.set(0, m);
 			
-			for (int i = 0; i < l; ++i) 
-				System.out.print(river.get(i).getVolume() + " ");		//Print del rio a cada tick
+		//	for (int i = 0; i < l; ++i) 
+		//		System.out.print(river.get(i).getVolume() + " ");		//Print del rio a cada tick
 			
-			System.out.println();
+			System.out.println("tick");
 		}
 	}	
 	
@@ -47,6 +47,7 @@ public class AgenteRio extends Agent{
 		@Override
 		public void action() {
 			try {
+				System.out.println("River Listening");
 				ACLMessage  msg = myAgent.receive();
 				if (msg != null) {
 					ACLMessage reply = msg.createReply();
@@ -57,29 +58,35 @@ public class AgenteRio extends Agent{
 							reply.setPerformative(ACLMessage.INFORM_REF);
 							reply.setContent("section");
 							reply.addUserDefinedParameter("section",String.valueOf(sections));
+							reply.setInReplyTo("section");
+							System.out.println("Secciones Enviadas");
 						}
 						else if (content != null && content.equals("volume")) {
+							
 							int s =Integer.valueOf(msg.getUserDefinedParameter("section"));
 							double v = Double.valueOf(msg.getUserDefinedParameter("volume"));
 							WaterMass w = river.get(s);
+							
 							if (w.getVolume() >= v) {
 								WaterMass wr = new WaterMass(v, w.getSuspendedSolids(), w.getChemicalOxygenDemand(), w.getBiologicalOxygenDemand(), w.getTotalNitrates(), w.getTotalSulfites());
 								w.setVolume(w.getVolume()-v);
 								reply.addReceiver(msg.getSender());
 								reply.setPerformative(ACLMessage.INFORM_REF);
-								reply.setContent("volume");
 								reply.setContentObject(wr);
+								reply.setInReplyTo("volume");
 							}
 							else {
 								reply.addReceiver(msg.getSender());
 								reply.setPerformative(ACLMessage.REFUSE);
 								reply.setContent("The river section does not contain that volume of water");
+								reply.setInReplyTo("volume");
 							}
 						}
 					}
 					else {
 						reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-						reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");   
+						reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");
+						reply.setInReplyTo("Unknown");
 					}
 					send(reply);
 				}
@@ -100,7 +107,7 @@ public class AgenteRio extends Agent{
 	protected void setup() {
 		
 	  	// Register the service
-	  	System.out.println("Agent " + getLocalName() + " registering service \"" + "River Sevice");
+	  	System.out.println("Agent " + getLocalName() + " registering River Sevice");
 	  	try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
 	  		dfd.setName(getAID());
@@ -110,6 +117,7 @@ public class AgenteRio extends Agent{
 	  		sd.setType("River");
 	  		dfd.addServices(sd);
 	  		DFService.register(this, dfd);
+	  		System.out.println("River Registered");
 	  	}
 	  	catch (FIPAException fe) {
 	  		fe.printStackTrace();

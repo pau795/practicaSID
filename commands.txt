@@ -1,5 +1,3 @@
-javac -cp lib/jade.jar src/practica/WaterMass.java -d classes src/practica/AgenteRio.java
+javac -cp lib/jade.jar src/practica/AgenteRio.java src/practica/WaterMass.java -d classes src/practica/IndustryAgent.java
 
-javac -cp lib/jade.jar src/practica/WaterMass.java -d classes src/practica/IndustryAgent.java
-
-java jade.Boot -gui
+java jade.Boot -gui -agents "river:practica.AgenteRio(5); ind1:practica.IndustryAgent"

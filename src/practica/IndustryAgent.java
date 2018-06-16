@@ -4,7 +4,6 @@ import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -18,36 +17,6 @@ import jade.lang.acl.UnreadableException;
 @SuppressWarnings("serial")
 public class IndustryAgent extends Agent {
 	
-	private class OneShotFindRiver extends OneShotBehaviour {
-		 
-		@Override
-		public void action() {
-			
-			// The behaviour register the type of the service that will search, in this case a River
-			DFAgentDescription dfd = new DFAgentDescription();
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType("River");
-			dfd.addServices(sd);
-			
-			// Set the number of results desired to 1
-			SearchConstraints sc = new SearchConstraints();
-			sc.setMaxResults(new Long(1));
-	        DFAgentDescription[] results = null;
-	        
-	        // Search the river
-	        try {
-	            results = DFService.search(myAgent, dfd, sc );
-	        } catch (FIPAException e) {
-	            // TODO Auto-generated catch block
-	            e.printStackTrace();
-	        }
-	        if (results.length > 0) {
-	            DFAgentDescription dfd2 = results[0];
-	            riverAID = dfd2.getName();
-		        System.out.println("The AID of the river has been found and it is: " + riverAID);
-	        }
-	    }
-	}
 	private class ExtractWater extends TickerBehaviour {
 		
 		public ExtractWater(Agent a, long period) {
@@ -64,24 +33,18 @@ public class IndustryAgent extends Agent {
 			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
 			msg.addUserDefinedParameter("volume", String.valueOf(waterVolume));
 			send(msg);
-			
+			System.out.println("Message Sended");
 			// If is possible to extract, do it, and inform
-			boolean waterAnswerReceived = false;
 			waterExtracted = null;
-			while(!waterAnswerReceived) {
-				ACLMessage msg2 = blockingReceive();
-				if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "volume") {
-					try {
-						waterExtracted = (WaterMass) msg2.getContentObject();
-						polluteWater();
-						waterAnswerReceived = true;
-					} catch (UnreadableException e) {
-						e.printStackTrace();
-					}
-				}
-				
-				else if(msg2.getPerformative() == ACLMessage.REFUSE && msg2.getContent() == "volume") {
-					waterAnswerReceived = true;
+			ACLMessage msg2 = blockingReceive();
+			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getInReplyTo().equals("volume")) {
+				try {
+					System.out.println("Intenta extraer Agua");
+					waterExtracted = (WaterMass) msg2.getContentObject();
+					polluteWater();
+					System.out.println("Water Received and polluted");
+				} catch (UnreadableException e) {
+					e.printStackTrace();
 				}
 			}
 		}
@@ -121,21 +84,53 @@ public class IndustryAgent extends Agent {
 	
 	protected void setup() {
 		
-		OneShotFindRiver fR = new OneShotFindRiver();
-		addBehaviour(fR);
+		// The behaviour register the type of the service that will search, in this case a River
+		DFAgentDescription dfd = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("River");
+		dfd.addServices(sd);
 		
-		ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
-		msg.setSender(getAID());
-		msg.addReceiver(riverAID);
-		msg.setContent("sections");
-		send(msg);
+		// Set the number of results desired to 1
+		SearchConstraints sc = new SearchConstraints();
+		sc.setMaxResults(new Long(1));
+        DFAgentDescription[] results = null;
+        
+        riverAID = null;
+        while(riverAID == null) {
+        
+	        // Search the river
+	        try {
+	            results = DFService.search(this, dfd, sc );
+	            System.out.println("Searching The river");
+	        } catch (FIPAException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        }
+	        if (results.length > 0) {
+	            DFAgentDescription dfd2 = results[0];
+	            riverAID = dfd2.getName();
+		        System.out.println("The AID of the river has been found and it is: " + riverAID);
+	        }
+	        else {
+	        	System.out.println("River not found");
+	        }
+        }
 		
 		// Register the number of section in which the industry will extract water
 		riverSection = -1;
-		while(riverSection != -1) {
-			ACLMessage msg2 = blockingReceive();
-			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "section")
+		while(riverSection < 0) {
+			
+			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+			msg.setSender(getAID());
+			msg.addReceiver(riverAID);
+			msg.setContent("section");
+			send(msg);
+			System.out.println("Request de section");
+			
+			ACLMessage msg2 = blockingReceive(3000);
+			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent().equals("section"))
 				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
+				System.out.println("seccio assignada " + riverSection);
 		}
 		
 		// The volume of water that this industry extracts from the river and how much it 
