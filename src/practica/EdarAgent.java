@@ -18,39 +18,9 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 
+@SuppressWarnings("serial")
 public class EdarAgent extends Agent{
 		
-	private class OneShotFindRiver extends OneShotBehaviour {
-		 
-		@Override
-		public void action() {
-			
-			// The behaviour register the type of the service that will search, in this case a River
-			DFAgentDescription dfd = new DFAgentDescription();
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType("River");
-			dfd.addServices(sd);
-			
-			// Set the number of results desired to 1
-			SearchConstraints sc = new SearchConstraints();
-			sc.setMaxResults(new Long(1));
-	        DFAgentDescription[] results = null;
-	        
-	        // Search the river
-	        try {
-	            results = DFService.search(myAgent, dfd, sc );
-	        } catch (FIPAException e) {
-	            // TODO Auto-generated catch block
-	            e.printStackTrace();
-	        }
-	        if (results.length > 0) {
-	            DFAgentDescription dfd2 = results[0];
-	            riverAID = dfd2.getName();
-		        System.out.println("The AID of the river has been found and it is: " + riverAID);
-	        }
-	    }
-	}
-	
 	@SuppressWarnings("serial")
 	private class WaterPurifier extends TickerBehaviour {
 		
@@ -200,6 +170,87 @@ public class EdarAgent extends Agent{
 		return m;
 	}
 	
+	
+	private void searchRiver() {
+		DFAgentDescription dfd = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("River");
+		dfd.addServices(sd);
+		
+		// Set the number of results desired to 1
+		SearchConstraints sc = new SearchConstraints();
+		sc.setMaxResults(new Long(1));
+        DFAgentDescription[] results = null;
+        
+        riverAID = null;
+        while(riverAID == null) {
+        
+	        // Search the river
+	        try {
+	            results = DFService.search(this, dfd, sc );
+	            System.out.println("Searching The river");
+	        } catch (FIPAException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        }
+	        if (results.length > 0) {
+	            DFAgentDescription dfd2 = results[0];
+	            riverAID = dfd2.getName();
+		        System.out.println("The AID of the river has been found and it is: " + riverAID);
+	        }
+	        else {
+	        	System.out.println("River not found");
+	        }
+        }
+		
+	}
+	
+	private void registerSection() {
+		// Register the number of section in which the industry will extract water
+		riverSection = -1;
+		while(riverSection < 0) {
+			
+			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+			msg.setSender(getAID());
+			msg.addReceiver(riverAID);
+			msg.setContent("section");
+			send(msg);
+			System.out.println("Request de section");
+			
+			ACLMessage msg2 = blockingReceive(3000);
+			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent().equals("section"))
+				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
+				System.out.println("seccion assignada " + riverSection);
+		}
+	}
+	
+	private void getSectionCapacity() {
+		ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+		msg.setSender(getAID());
+		msg.addReceiver(riverAID);
+		msg.setContent("capacity");
+		send(msg);
+		
+		sectionCapacity = -1;
+		while(sectionCapacity == -1) {
+			ACLMessage msg2 = blockingReceive(3000);
+			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "capacity")
+				sectionCapacity = Double.valueOf(msg2.getUserDefinedParameter("section"));
+		}
+	}
+	
+	private void registerAgent() throws FIPAException {
+		System.out.println("Agent " + getLocalName() + " registering River Sevice");
+	  	DFAgentDescription dfd = new DFAgentDescription();
+	  	dfd.setName(getAID());
+  		ServiceDescription sd = new ServiceDescription();
+  		sd.setName("Edar");
+  		sd.setType("Edar");
+  		dfd.addServices(sd);
+  		DFService.register(this, dfd);
+  		System.out.println("Edar Registered");
+	}
+	
 	private Random r = new Random();
 	
 	static private AID riverAID;
@@ -240,37 +291,17 @@ public class EdarAgent extends Agent{
 	}
 	
 	public void setup() {
-		OneShotFindRiver fR = new OneShotFindRiver();
-		addBehaviour(fR);
 		
-		initialiteTanks();
-		
-		ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
-		msg.setSender(getAID());
-		msg.addReceiver(riverAID);
-		msg.setContent("section");
-		send(msg);
-		
-		riverSection = -1;
-		while(riverSection == -1) {
-			ACLMessage msg2 = blockingReceive(3000);
-			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "section")
-				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
+		searchRiver();
+		initialiteTanks();		
+		registerSection();
+		getSectionCapacity();
+		try {
+			registerAgent();
 		}
-		
-		ACLMessage msg1 = new ACLMessage(ACLMessage.QUERY_REF);
-		msg1.setSender(getAID());
-		msg1.addReceiver(riverAID);
-		msg1.setContent("capacity");
-		send(msg1);
-		
-		sectionCapacity = -1;
-		while(sectionCapacity == -1) {
-			ACLMessage msg2 = blockingReceive(3000);
-			if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent() == "capacity")
-				sectionCapacity = Double.valueOf(msg2.getUserDefinedParameter("section"));
-		}
-		
+		catch (FIPAException e){
+			e.printStackTrace();
+		}		
 		WaterPurifier w = new WaterPurifier(this, 5000);
 		addBehaviour(w);
 		
