@@ -53,7 +53,6 @@ public class AgenteRio extends Agent{
 					if (msg.getPerformative()== ACLMessage.QUERY_REF){
 						String content = msg.getContent();
 						if (content != null && content.equals("section")) {
-							reply.addReceiver(msg.getSender());
 							reply.setPerformative(ACLMessage.INFORM_REF);
 							reply.setContent("section");
 							reply.addUserDefinedParameter("section",String.valueOf(sections));
@@ -61,7 +60,6 @@ public class AgenteRio extends Agent{
 							System.out.println("Secciones Enviadas");
 						}
 						else if (content != null && content.equals("capacity")) {
-							reply.addReceiver(msg.getSender());
 							reply.setPerformative(ACLMessage.INFORM_REF);
 							reply.setContent("capacity");
 							reply.addUserDefinedParameter("capacity",String.valueOf(river.get(0).getCapacity()));
@@ -77,13 +75,11 @@ public class AgenteRio extends Agent{
 							if (w.getVolume() >= v) {
 								WaterMass wr = new WaterMass(v, w.getSuspendedSolids(), w.getChemicalOxygenDemand(), w.getBiologicalOxygenDemand(), w.getTotalNitrates(), w.getTotalSulfites());
 								w.setVolume(w.getVolume()-v);
-								reply.addReceiver(msg.getSender());
 								reply.setPerformative(ACLMessage.INFORM_REF);
 								reply.setContentObject(wr);
 								reply.setInReplyTo("volume");
 							}
 							else {
-								reply.addReceiver(msg.getSender());
 								reply.setPerformative(ACLMessage.REFUSE);
 								reply.setContent("The river section does not contain that volume of water");
 								reply.setInReplyTo("volume");
@@ -97,13 +93,11 @@ public class AgenteRio extends Agent{
 							WaterMass m = (WaterMass) msg.getContentObject();
 							if (river.get(s).getVolume() + m.getVolume() <= river.get(s).getCapacity()) {
 								river.set(s,WaterMass.mergeWater(m, river.get(s)));
-								reply.addReceiver(msg.getSender());
 								reply.setPerformative(ACLMessage.CONFIRM);
 								reply.setContent("Water mass recived succesfully");
 								reply.setConversationId("purified");
 							}
 							else {
-								reply.addReceiver(msg.getSender());
 								reply.setPerformative(ACLMessage.REFUSE);
 								reply.setContent("Is not possible to pour that volume of water");
 								reply.setConversationId("purified");
