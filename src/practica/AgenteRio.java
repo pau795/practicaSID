@@ -31,10 +31,10 @@ public class AgenteRio extends Agent{
 			WaterMass m = new WaterMass();
 			river.set(0, m);
 			
-		//	for (int i = 0; i < l; ++i) 
-		//		System.out.print(river.get(i).getVolume() + " ");		//Print del rio a cada tick
+			for (int i = 0; i < l; ++i) 
+				System.out.print(river.get(i).getVolume() + " ");		//Print del rio a cada tick
 			
-			System.out.println("tick");
+			System.out.println("");
 		}
 	}	
 	
@@ -47,7 +47,6 @@ public class AgenteRio extends Agent{
 		@Override
 		public void action() {
 			try {
-				System.out.println("River Listening");
 				ACLMessage  msg = myAgent.receive();
 				if (msg != null) {
 					ACLMessage reply = msg.createReply();
