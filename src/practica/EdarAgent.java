@@ -53,33 +53,35 @@ public class EdarAgent extends Agent{
 				m.setTotalNitrates(purifiedWater.getTotalNitrates()*pourRatio);
 				m.setTotalSulfites(purifiedWater.getTotalSulfites()*pourRatio);
 			}
-			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
-			msg.addReceiver(riverAID);
-			msg.setSender(getAID());
-			msg.setConversationId("purified");
-			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
-			try {
-				msg.setContentObject(m);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			send(msg);
-			
-			boolean answer = false;
-			while (!answer) {
-				ACLMessage msg2 = blockingReceive(3000);
-				answer=true;
-				if(msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId() == "purified") {
-					purifiedWater.setVolume(purifiedWater.getVolume()-m.getVolume());
-					purifiedWater.setSuspendedSolids(purifiedWater.getSuspendedSolids()-m.getSuspendedSolids());
-					purifiedWater.setChemicalOxygenDemand(purifiedWater.getChemicalOxygenDemand()-m.getChemicalOxygenDemand());
-					purifiedWater.setBiologicalOxygenDemand(purifiedWater.getBiologicalOxygenDemand()-m.getBiologicalOxygenDemand());
-					purifiedWater.setTotalNitrates(purifiedWater.getTotalNitrates()-m.getTotalNitrates());
-					purifiedWater.setTotalSulfites(purifiedWater.getTotalSulfites()-m.getTotalSulfites());
-					System.out.println("The water was poured to the river successfully");
+			if (m.getVolume() > 0) {
+				ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+				msg.addReceiver(riverAID);
+				msg.setSender(getAID());
+				msg.setConversationId("purified");
+				msg.addUserDefinedParameter("section", String.valueOf(riverSection));
+				try {
+					msg.setContentObject(m);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				else System.out.println("Is not possible to pour water to the river");
+				send(msg);
+				
+				boolean answer = false;
+				while (!answer) {
+					ACLMessage msg2 = blockingReceive(3000);
+					answer=true;
+					if(msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId() == "purified") {
+						purifiedWater.setVolume(purifiedWater.getVolume()-m.getVolume());
+						purifiedWater.setSuspendedSolids(purifiedWater.getSuspendedSolids()-m.getSuspendedSolids());
+						purifiedWater.setChemicalOxygenDemand(purifiedWater.getChemicalOxygenDemand()-m.getChemicalOxygenDemand());
+						purifiedWater.setBiologicalOxygenDemand(purifiedWater.getBiologicalOxygenDemand()-m.getBiologicalOxygenDemand());
+						purifiedWater.setTotalNitrates(purifiedWater.getTotalNitrates()-m.getTotalNitrates());
+						purifiedWater.setTotalSulfites(purifiedWater.getTotalSulfites()-m.getTotalSulfites());
+						System.out.println(m.getVolume()+" liters of were poured to the river successfully");
+					}
+					else System.out.println("Is not possible to pour water to the river");
+				}
 			}
 		}
 		
@@ -109,27 +111,29 @@ public class EdarAgent extends Agent{
 			if (msg!=null) {
 				ACLMessage reply =msg.createReply();
 				String content =msg.getContent();
-				if (content!=null && msg.getConversationId()=="dump") {
-					try {
-						WaterMass m = (WaterMass) msg.getContentObject();
-						if (pollutedWater.getVolume() + m.getVolume() <= pollutedWater.getCapacity()) {
-							pollutedWater=WaterMass.mergeWater(m, pollutedWater);
-							reply.addReceiver(msg.getSender());
-							reply.setPerformative(ACLMessage.CONFIRM);
-							reply.setContent("Water mass recived succesfully");
-							reply.setConversationId("dump");
+				if (msg.getPerformative()==ACLMessage.QUERY_IF) {
+					if (content!=null && msg.getConversationId().equals("dump")) {
+						try {
+							WaterMass m = (WaterMass) msg.getContentObject();
+							if (pollutedWater.getVolume() + m.getVolume() <= pollutedWater.getCapacity()) {
+								pollutedWater=WaterMass.mergeWater(m, pollutedWater);
+								reply.addReceiver(msg.getSender());
+								reply.setPerformative(ACLMessage.CONFIRM);
+								reply.setContent("Water mass recived succesfully");
+								reply.setConversationId("dump");
+								send(reply);
+							}
+							else {
+								reply.addReceiver(msg.getSender());
+								reply.setPerformative(ACLMessage.REFUSE);
+								reply.setContent("The polluted water tank cannot recive that volume of water");
+								reply.setConversationId("dump");
+								send(reply);
+							}		
+						} catch (UnreadableException e) {
+							e.printStackTrace();
 						}
-						else {
-							reply.addReceiver(msg.getSender());
-							reply.setPerformative(ACLMessage.REFUSE);
-							reply.setContent("The polluted water tank cannot recive that volume of water");
-							reply.setConversationId("dump");
-						}
-							
-					} catch (UnreadableException e) {
-						e.printStackTrace();
 					}
-					
 				}
 			}
 			

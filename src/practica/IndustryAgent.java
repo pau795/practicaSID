@@ -40,6 +40,7 @@ public class IndustryAgent extends Agent {
 			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
 			msg.addUserDefinedParameter("volume", String.valueOf(waterVolume));
 			send(msg);
+			System.out.println("Trying to extract "+ waterVolume +"liters of water");
 			// If is possible to extract, do it, and inform
 			waterExtracted = null;
 			ACLMessage msg2 = blockingReceive();
@@ -55,18 +56,18 @@ public class IndustryAgent extends Agent {
 		}
 
 		private void managePollutedWater() {
-			
-			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+			msg.setContent("dump");
 			msg.setSender(getAID());
 			msg.addReceiver(EDARAID);
-			msg.setPerformative(ACLMessage.QUERY_IF);
 			try {
 				msg.setConversationId("dump");
 				msg.setContentObject(waterExtracted);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+			send(msg);			
+			System.out.println("sending water to edar");
 			ACLMessage msg2 = blockingReceive();
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId().equals("dump")) {
 				waterExtracted = null;
@@ -221,7 +222,7 @@ public class IndustryAgent extends Agent {
 	        if (results.length > 0) {
 	            DFAgentDescription dfd2 = results[0];
 	            EDARAID = dfd2.getName();
-		        System.out.println("The AID of the EDAR has been found and it is: " + riverAID);
+		        System.out.println("The AID of the EDAR has been found and it is: " + EDARAID);
 	        }
 	        else {
 	        	System.out.println("EDAR not found");
