@@ -27,15 +27,21 @@ public class EdarAgent extends Agent{
 		public void onTick() {
 			
 			//Purify water
-			WaterMass waterToPurify = getWater();
+			waterToPurify = getWater();
+			System.out.println("\n"+"Water to purify:"+"\n");
+			System.out.println(waterToPurify+"\n");
+			System.out.println("Purifying...");
 			waterToPurify.setSuspendedSolids(waterToPurify.getSuspendedSolids()*sspr);
 			waterToPurify.setChemicalOxygenDemand(waterToPurify.getChemicalOxygenDemand()*codpr);
 			waterToPurify.setBiologicalOxygenDemand(waterToPurify.getBiologicalOxygenDemand()*bodpr);
 			waterToPurify.setTotalNitrates(waterToPurify.getTotalNitrates()*tnpr);
 			waterToPurify.setTotalSulfites(waterToPurify.getTotalSulfites()*tspr);
+			System.out.println("Result:\n"+waterToPurify+"\n");
 			if (isPurified(waterToPurify)) {
+				System.out.println("Water successfully purified");
 				purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
 				waterToPurify = new WaterMass(0,0,0,0,0,0);
+				System.out.println("The purified water tank has " + purifiedWater.getVolume() + " liters of water");
 			}
 			
 			//Pour the water into the river
@@ -49,35 +55,38 @@ public class EdarAgent extends Agent{
 				m.setTotalNitrates(purifiedWater.getTotalNitrates()*pourRatio);
 				m.setTotalSulfites(purifiedWater.getTotalSulfites()*pourRatio);
 			}
-			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
-			msg.addReceiver(riverAID);
-			msg.setSender(getAID());
-			msg.setConversationId("purified");
-			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
-			try {
-				msg.setContentObject(m);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			send(msg);
-			
-			boolean answer = false;
-			while (!answer) {
-				ACLMessage msg2 = blockingReceive(3000);
-				answer=true;
-				
-				if(msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId() == "purified") {
-					purifiedWater.setVolume(purifiedWater.getVolume()-m.getVolume());
-					purifiedWater.setSuspendedSolids(purifiedWater.getSuspendedSolids()-m.getSuspendedSolids());
-					purifiedWater.setChemicalOxygenDemand(purifiedWater.getChemicalOxygenDemand()-m.getChemicalOxygenDemand());
-					purifiedWater.setBiologicalOxygenDemand(purifiedWater.getBiologicalOxygenDemand()-m.getBiologicalOxygenDemand());
-					purifiedWater.setTotalNitrates(purifiedWater.getTotalNitrates()-m.getTotalNitrates());
-					purifiedWater.setTotalSulfites(purifiedWater.getTotalSulfites()-m.getTotalSulfites());
-					System.out.println("EDAR has poured " + m.getVolume() + " liters to the river successfully");
+			if(m.getVolume() > 0) {
+				ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+				msg.addReceiver(riverAID);
+				msg.setSender(getAID());
+				msg.setConversationId("purified");
+				msg.addUserDefinedParameter("section", String.valueOf(riverSection));
+				try {
+					msg.setContentObject(m);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				else System.out.println("Is not possible to pour water to the river");
+				send(msg);
+				System.out.println("The EDAR is trying to pour " + m.getVolume() +" liters of water to the river");
+				boolean answer = false;
+				while (!answer) {
+					ACLMessage msg2 = blockingReceive(3000);
+					answer=true;
+					
+					if(msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId() == "purified") {
+						purifiedWater.setVolume(purifiedWater.getVolume()-m.getVolume());
+						purifiedWater.setSuspendedSolids(purifiedWater.getSuspendedSolids()-m.getSuspendedSolids());
+						purifiedWater.setChemicalOxygenDemand(purifiedWater.getChemicalOxygenDemand()-m.getChemicalOxygenDemand());
+						purifiedWater.setBiologicalOxygenDemand(purifiedWater.getBiologicalOxygenDemand()-m.getBiologicalOxygenDemand());
+						purifiedWater.setTotalNitrates(purifiedWater.getTotalNitrates()-m.getTotalNitrates());
+						purifiedWater.setTotalSulfites(purifiedWater.getTotalSulfites()-m.getTotalSulfites());
+						System.out.println("EDAR has poured " + m.getVolume() + " liters to the river successfully");
+					}
+					else System.out.println("Is not possible to pour water to the river");
+				}
 			}
+			else System.out.println("The EDAR has no water ready to be poured");
 		}
 		
 	}
@@ -92,47 +101,6 @@ public class EdarAgent extends Agent{
 		else return false;
 			
 	}
-	
-	private class MessageReciver extends CyclicBehaviour {
-
-		public MessageReciver(Agent a) {
-			super(a);
-		}
-		
-		@Override
-		public void action() {
-			ACLMessage  msg = myAgent.receive();
-			if (msg!=null) {
-				ACLMessage reply =msg.createReply();
-				String content =msg.getContent();
-				if (msg.getPerformative()==ACLMessage.QUERY_IF) {
-					if (content!=null && msg.getConversationId().equals("dump")) {
-						try {
-							WaterMass m = (WaterMass) msg.getContentObject();
-							if (pollutedWater.getVolume() + m.getVolume() <= pollutedWater.getCapacity()) {
-								pollutedWater=WaterMass.mergeWater(m, pollutedWater);
-								reply.setPerformative(ACLMessage.CONFIRM);
-								reply.setContent("The EDAR has received a water mass succesfully");
-								reply.setConversationId("dump");
-								send(reply);
-							}
-							else {
-								reply.setPerformative(ACLMessage.REFUSE);
-								reply.setContent("The polluted water tank cannot receive that volume of water");
-								reply.setConversationId("dump");
-								send(reply);
-							}		
-						} catch (UnreadableException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			}
-			
-		}
-		
-	}
-	
 	
 	//This method decides which WaterMass is going to be purified.
 	//If there is a WaterMass on the procces of being purified, it chooses that one.
@@ -165,8 +133,50 @@ public class EdarAgent extends Agent{
 		}
 		return m;
 	}
-	
-	
+			
+	private class MessageReciver extends CyclicBehaviour {
+
+		public MessageReciver(Agent a) {
+			super(a);
+		}
+		
+		@Override
+		public void action() {
+			ACLMessage  msg = myAgent.receive();
+			if (msg!=null) {
+				ACLMessage reply =msg.createReply();
+				String content =msg.getContent();
+				if (msg.getPerformative()==ACLMessage.QUERY_IF) {
+					if (content!=null && msg.getConversationId().equals("dump")) {
+						try {
+							WaterMass m = (WaterMass) msg.getContentObject();
+							if (pollutedWater.getVolume() + m.getVolume() <= pollutedWater.getCapacity()) {
+								pollutedWater=WaterMass.mergeWater(m, pollutedWater);
+								reply.setPerformative(ACLMessage.CONFIRM);
+								reply.setContent("The EDAR has received a water mass succesfully");
+								reply.setConversationId("dump");
+								send(reply);
+								System.out.println("The EDAR has received a water mass succesfully");
+								System.out.println("The polluted water tank has " + pollutedWater.getVolume()+" liters of water");
+							}
+							else {
+								reply.setPerformative(ACLMessage.REFUSE);
+								reply.setContent("The polluted water tank cannot receive that volume of water");
+								reply.setConversationId("dump");
+								send(reply);
+								System.out.println("The polluted water tank cannot receive that volume of water");
+							}		
+						} catch (UnreadableException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			
+		}
+		
+	}
+		
 	private void searchRiver() {
 		DFAgentDescription dfd = new DFAgentDescription();
 		ServiceDescription sd = new ServiceDescription();
@@ -262,11 +272,11 @@ public class EdarAgent extends Agent{
 	private double MaxPurifiableCapacity = 1000;
 	
 	//purifiable ratios
-	private double sspr = 0.8;		//suspended solids purifiable ratio
-	private double codpr = 0.7;		//chemical oxygen demand purifiable ratio	
-	private double bodpr = 0.8;		//biological oxygen demand purifiable ratio
-	private double tnpr = 0.9;		//total nitrates purifiable ratio
-	private double tspr = 0.9;		//total sulfites purifiable ratio
+	private double sspr = 1 - 0.8;		//suspended solids purifiable ratio
+	private double codpr = 1 - 0.7;		//chemical oxygen demand purifiable ratio	
+	private double bodpr = 1 - 0.8;		//biological oxygen demand purifiable ratio
+	private double tnpr = 1 - 0.9;		//total nitrates purifiable ratio
+	private double tspr = 1 - 0.9;		//total sulfites purifiable ratio
 	
 	//purifiable thresholds
 	private double sspt = 5;		//suspended solids purifiable threshold

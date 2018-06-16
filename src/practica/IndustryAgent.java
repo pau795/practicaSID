@@ -40,7 +40,7 @@ public class IndustryAgent extends Agent {
 			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
 			msg.addUserDefinedParameter("volume", String.valueOf(waterVolume));
 			send(msg);
-			System.out.println("Industry " + getLocalName() + " trying to extract "+ waterVolume +" liters of water");
+			System.out.println("Industry " + getLocalName() + " is trying to extract "+ waterVolume +" liters of water");
 
 			// If is possible to extract, do it, and inform
 			waterExtracted = null;
@@ -61,6 +61,7 @@ public class IndustryAgent extends Agent {
 		private void managePollutedWater() {
 			
 			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+			msg.setContent("dump");
 			msg.setSender(getAID());
 			msg.addReceiver(EDARAID);
 			try {
@@ -74,7 +75,7 @@ public class IndustryAgent extends Agent {
 
 			ACLMessage msg2 = blockingReceive(3000);
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId().equals("dump")) {
-				System.out.println("Industry " + getLocalName() + " dump " + waterExtracted.getVolume()+" liters of water to the EDAR");
+				System.out.println("Industry " + getLocalName() + " dumps " + waterExtracted.getVolume()+" liters of water to the EDAR");
 				waterExtracted = null;
 			}
 		}
