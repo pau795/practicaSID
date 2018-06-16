@@ -140,7 +140,6 @@ public class EdarAgent extends Agent{
 	private WaterMass getWater() {
 		WaterMass m;
 		if (waterToPurify.getVolume()>0) m=waterToPurify;
-		
 		else if (pollutedWater.getVolume()>waterToPurify.getCapacity()) {
 			double ratio = waterToPurify.getCapacity()/pollutedWater.getVolume();
 			double v = waterToPurify.getCapacity();
@@ -158,7 +157,6 @@ public class EdarAgent extends Agent{
 			pollutedWater.setTotalNitrates(pollutedWater.getTotalNitrates()-tn);
 			pollutedWater.setTotalSulfites(pollutedWater.getTotalSulfites()-ts);
 		}
-		
 		else {
 			m = pollutedWater;
 			m.setCapacity(MaxPurifiableCapacity);
@@ -250,7 +248,7 @@ public class EdarAgent extends Agent{
   		System.out.println("Edar Registered");
 	}
 	
-	private Random r = new Random(System.currentTimeMillis());
+	private Random r = new Random();
 	
 	static private AID riverAID;
 	static private int riverSection;

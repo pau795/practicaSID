@@ -103,23 +103,20 @@ public class IndustryAgent extends Agent {
 	private AID riverAID;
 	private AID EDARAID;
 	private int riverSection;
-	static private long agents = 0;
 	
-	static private double waterVolume;
-	static private double suspendedSolids;
-	static private double chemicalOxygenDemand;
-	static private double biologicalOxygenDemand;
-	static private double totalSulfites;
-	static private double totalNitrates;
+    private double waterVolume;
+	private double suspendedSolids;
+	private double chemicalOxygenDemand;
+	private double biologicalOxygenDemand;
+	private double totalSulfites;
+	private double totalNitrates;
 	
-	private Random r; 
+	static private Random r = new Random(); 
+	
 	private WaterMass waterExtracted;
-	
 	
 	protected void setup() {
 		
-		agents += 1;
-		r = new Random(agents);
 		setIndustryParameters();
 		searchRiver();
 		searchEDAR();
@@ -130,13 +127,11 @@ public class IndustryAgent extends Agent {
 		addBehaviour(eW);
 	}
 
-
-
 	private void setIndustryParameters() {
 		// The volume of water that this industry extracts from the river and how much it 
 		// pollutes the water remains constant during all the execution
 
-		waterVolume = 1000*r.nextDouble();
+		waterVolume = 700*r.nextDouble();
 		suspendedSolids = r.nextDouble()*200;
 		chemicalOxygenDemand = r.nextDouble()*200;
 		biologicalOxygenDemand = r.nextDouble()*200;
