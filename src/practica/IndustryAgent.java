@@ -146,7 +146,7 @@ public class IndustryAgent extends Agent {
         }
         
         //Method to prive a proposal to the CPF
-        protected ACLMessage prepareResponse(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+        protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
                 System.out.println("Industry "+getLocalName()+" receives a CFP from "+cfp.getSender().getName()+" to perform action: "+cfp.getContent() + "");
                 if (tankOfWater.getVolume() > 0) {
                     // We provide a proposal   
@@ -170,7 +170,7 @@ public class IndustryAgent extends Agent {
         	
         
         	//Method to perform an action when the agent accepts our proposal
-            protected ACLMessage prepareResultNotification(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+            protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
                 System.out.println("Industry "+getLocalName()+" accepts proposal and is about to dump water");
                 double v = Double.valueOf(accept.getUserDefinedParameter("volume"));
                 if (tankOfWater.getVolume() > v) {

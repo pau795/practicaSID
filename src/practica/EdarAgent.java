@@ -460,7 +460,7 @@ public class EdarAgent extends Agent{
 	
 	private void initializeCNIMessage() {
 		nResponders=industries.size();
-		cniMessage =  new ACLMessage(ACLMessage.CFP);
+		cniMessage = new ACLMessage(ACLMessage.CFP);
 		cniMessage.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
 		cniMessage.setReplyByDate(new Date(System.currentTimeMillis() + 5000));
 		cniMessage.setContent("waterProposal");
