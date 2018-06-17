@@ -1,9 +1,12 @@
 package practica;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.Vector;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -11,11 +14,13 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
+import jade.proto.ContractNetInitiator;
 
 @SuppressWarnings("serial")
 public class EdarAgent extends Agent{
@@ -47,8 +52,14 @@ public class EdarAgent extends Agent{
 					System.out.println("The purified water tank has " + purifiedWater.getVolume() + " liters of water");
 				}
 			}
-			
 			else System.out.println("The EDAR has no water to purify");
+			
+			//If there is not enough polluted water to work with, make a call for proposals asking for water
+			if (pollutedWater.getVolume() < minPollutedWater && !cfpInProgress) {
+				System.out.println("Doing a call for proposals asking for water to all the industries");
+				ContractNetInitiatorBehaviour cni = new ContractNetInitiatorBehaviour(myAgent, cniMessage);
+				addBehaviour(cni);	
+			}	
 			
 			//Pour the water into the river
 			WaterMass m = new WaterMass();
@@ -140,7 +151,103 @@ public class EdarAgent extends Agent{
 		}
 		return m;
 	}
-			
+	
+	@SuppressWarnings("rawtypes")
+	private class ContractNetInitiatorBehaviour extends ContractNetInitiator {
+
+		public ContractNetInitiatorBehaviour(Agent a, ACLMessage cfp) {
+			super(a, cfp);
+		}
+		
+		public void onStart(){
+			cfpInProgress=true;
+		}
+		
+		public int onEnd() {
+			cfpInProgress=false;
+			return super.onEnd();
+		}
+		
+	    protected void handlePropose(ACLMessage propose,  Vector v)
+         {
+	    	 System.out.println("Agent '"+propose.getSender().getName()+"' proposed '"+propose.getContent() + "'");
+         }
+
+        protected void handleRefuse(ACLMessage refuse)
+        {
+                System.out.println("Agent '"+refuse.getSender().getName()+"' refused");
+        }
+
+        protected void handleFailure(ACLMessage failure)
+        {
+                if (failure.getSender().equals(myAgent.getAMS())) {
+                        // FAILURE notification from the JADE runtime: the receiver
+                        // does not exist
+                        System.out.println("Responder does not exist");
+                }
+                else {
+                        System.out.println("Agent '"+failure.getSender().getName()+"' failed");
+                }
+                // Immediate failure --> we will not receive a response from this agent
+                nResponders--;
+        }
+        
+        @SuppressWarnings("unchecked")
+		protected void handleAllResponses(Vector responses, Vector acceptances)
+        {
+                if (responses.size() < nResponders) {
+                        // Some responder didn't reply within the specified timeout
+                        System.out.println("Timeout expired: missing "+(nResponders - responses.size())+" responses");
+                }              
+                                
+                //The EDAR wants to fill an 80% of the available volume of the polluted tank.
+                //It uses the following strategy: it estimates the amount of water that wants from each proposal dividing the
+                //total desired volume by the number of proposals, and tries to get the same amount of volume from each one.
+                //However, if any proposal has less volume than the estimated one, it will accept that amount,
+                //and try to get the rest from other proposals, if possible, trying to get as close as possible to the total desired water.
+                double totalDesiredWater = pollutedWater.getAvailableVolume()*0.8;
+                double estimatedWater = totalDesiredWater/responses.size();
+                double deficit = 0;
+                Enumeration e = responses.elements();
+                while (e.hasMoreElements()) {
+                	ACLMessage msg = (ACLMessage) e.nextElement();
+                    if (msg.getPerformative() == ACLMessage.PROPOSE) {
+                    	try {
+                    		ACLMessage reply = msg.createReply();
+                    		reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+							WaterMass m =(WaterMass) msg.getContentObject();
+							//we check if the volume proposed can satisfy our estimated volume
+							if (m.getVolume() > estimatedWater) {
+								//and even more, if we can take all the volume from the deficit of other proposals
+								if (m.getVolume() > estimatedWater+deficit) {
+									reply.addUserDefinedParameter("volume",String.valueOf(estimatedWater+deficit));
+									deficit = 0;
+								}
+								//if not, take as much volume as possible to minimice the deficit
+								else {
+									reply.addUserDefinedParameter("volume", String.valueOf(m.getVolume()));
+									deficit -= m.getVolume()-estimatedWater;
+								}
+							}
+							//if the proposal has less volume than the estimated, accpet and add the deficit
+							else {
+								reply.addUserDefinedParameter("volume", String.valueOf(m.getVolume()));
+								deficit += estimatedWater - m.getVolume();								
+							}
+							acceptances.addElement(reply);
+						} catch (UnreadableException e1) {
+							e1.printStackTrace();
+						}
+                    }
+                }
+        }
+
+        protected void handleInform(ACLMessage inform)
+        {
+                System.out.println("Agent '"+inform.getSender().getName()+"' successfully performed the requested action");
+        }
+	}
+	
 	private class MessageReciver extends CyclicBehaviour {
 
 		public MessageReciver(Agent a) {
@@ -206,6 +313,8 @@ public class EdarAgent extends Agent{
 					// An industry sends its AID to the EDAR and the EDAR confirms
 					if(msg.getConversationId().equals("Industry")){
 						industries.add(msg.getSender());
+						cniMessage.addReceiver(msg.getSender());
+						nResponders++;
 						reply.setPerformative(ACLMessage.CONFIRM);
 						send(reply);
 						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
@@ -234,7 +343,6 @@ public class EdarAgent extends Agent{
 	            results = DFService.search(this, dfd, sc );
 	            System.out.println("EDAR searching the river");
 	        } catch (FIPAException e) {
-	            // TODO Auto-generated catch block
 	            e.printStackTrace();
 	        }
 	        if (results.length > 0) {
@@ -330,9 +438,15 @@ public class EdarAgent extends Agent{
 	
 	private double pourRatio = 0.3;	//pour ratio
 	private Set<AID> industries = new HashSet<>();
-
 	
-	private void initialiteTanks() {
+	private double minPollutedWater =1000;
+	
+	ACLMessage cniMessage;
+	int nResponders;
+	boolean cfpInProgress=false;
+	
+	
+	private void initializeTanks() {
 		pollutedWater= new WaterMass(0,0,0,0,0,0);
 		waterToPurify= new WaterMass(0,0,0,0,0,0);
 		purifiedWater= new WaterMass(0,0,0,0,0,0);
@@ -341,14 +455,23 @@ public class EdarAgent extends Agent{
 		purifiedWater.setCapacity(MaxTankCapacity);
 	}
 	
+	private void initializeCNIMessage() {
+		nResponders=industries.size();
+		cniMessage =  new ACLMessage(ACLMessage.CFP);
+		cniMessage.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+		cniMessage.setReplyByDate(new Date(System.currentTimeMillis() + 5000));
+		cniMessage.setContent("waterProposal");
+	}
+	
 	public void setup() {
 		
 		searchRiver();
-		initialiteTanks();		
+		initializeTanks();		
 		registerSection();
 		getSectionCapacity();
 		registerAgent();
-
+		initializeCNIMessage();
+		
 		WaterPurifier w = new WaterPurifier(this, 5000);
 		addBehaviour(w);
 		
