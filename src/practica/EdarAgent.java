@@ -50,8 +50,9 @@ public class EdarAgent extends Agent{
 			
 			//Pour the water into the river
 			WaterMass m = new WaterMass();
-			if (purifiedWater.getVolume() <= sectionCapacity*pourRatio) m = purifiedWater;
+			if (purifiedWater.getVolume() <= sectionCapacity*pourRatio) m = new WaterMass(purifiedWater);
 			else {
+				m.setCapacity(sectionCapacity);
 				m.setVolume(sectionCapacity*pourRatio);	
 				m.setSuspendedSolids(purifiedWater.getSuspendedSolids());
 				m.setChemicalOxygenDemand(purifiedWater.getChemicalOxygenDemand()*pourRatio);

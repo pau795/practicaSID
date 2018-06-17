@@ -40,6 +40,16 @@ public class WaterMass implements Serializable {
 	}
 
 
+	public WaterMass(WaterMass m) {
+		this.capacity=m.capacity;
+		this.volume=m.volume;
+		this.suspendedSolids=m.suspendedSolids;
+		this.chemicalOxygenDemand=m.chemicalOxygenDemand;
+		this.biologicalOxygenDemand=m.biologicalOxygenDemand;
+		this.totalNitrates=m.totalNitrates;
+		this.totalSulfites=m.totalSulfites;
+	}
+	
 	public WaterMass(double wE, double sS, double cOD, double bOD, double tN, double tS) {
 
 		setCapacity(1000);
