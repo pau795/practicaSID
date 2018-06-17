@@ -49,7 +49,7 @@ public class EdarAgent extends Agent{
 					System.out.println("Water successfully purified");
 					purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
 					waterToPurify = new WaterMass(0,0,0,0,0,0);
-					System.out.println("The purified water tank has " + purifiedWater.getVolume() + " liters of water");
+					System.out.println("EDAR purified water tank has " + purifiedWater.getVolume() + " liters of water");
 				}
 			}
 			else System.out.println("The EDAR has no water to purify");
@@ -168,8 +168,7 @@ public class EdarAgent extends Agent{
 			return super.onEnd();
 		}
 		
-	    protected void handlePropose(ACLMessage propose,  Vector v)
-         {
+	    protected void handlePropose(ACLMessage propose,  Vector v) {
 	    	 System.out.println("Agent '"+propose.getSender().getName()+"' proposed '"+propose.getContent() + "'");
          }
 
@@ -178,8 +177,7 @@ public class EdarAgent extends Agent{
                 System.out.println("Agent '"+refuse.getSender().getName()+"' refused");
         }
 
-        protected void handleFailure(ACLMessage failure)
-        {
+        protected void handleFailure(ACLMessage failure) {
                 if (failure.getSender().equals(myAgent.getAMS())) {
                         // FAILURE notification from the JADE runtime: the receiver
                         // does not exist
@@ -193,8 +191,7 @@ public class EdarAgent extends Agent{
         }
         
         @SuppressWarnings("unchecked")
-		protected void handleAllResponses(Vector responses, Vector acceptances)
-        {
+		protected void handleAllResponses(Vector responses, Vector acceptances) {
                 if (responses.size() < nResponders) {
                         // Some responder didn't reply within the specified timeout
                         System.out.println("Timeout expired: missing "+(nResponders - responses.size())+" responses");
@@ -241,10 +238,16 @@ public class EdarAgent extends Agent{
                     }
                 }
         }
-
-        protected void handleInform(ACLMessage inform)
-        {
-                System.out.println("Agent '"+inform.getSender().getName()+"' successfully performed the requested action");
+        
+        protected void handleInform(ACLMessage inform) {
+        	try {
+				WaterMass m =(WaterMass) inform.getContentObject();
+				WaterMass.mergeWater(m, pollutedWater);
+	        	System.out.println("Industry '"+inform.getSender().getName()+" has successfully dumped "+ m.getVolume() + " liters of water");
+	        	System.out.println("The polluted water tank has " + pollutedWater.getVolume()+" liters of water");
+			} catch (UnreadableException e) {
+				e.printStackTrace();
+			}
         }
 	}
 	
@@ -278,7 +281,7 @@ public class EdarAgent extends Agent{
 								reply.setConversationId("dump");
 								send(reply);
 								System.out.println("The EDAR has received a water mass from " + msg.getSender().getLocalName() + " succesfully");
-								System.out.println("The polluted water tank has " + pollutedWater.getVolume()+" liters of water");
+								System.out.println("EDAR polluted water tank has " + pollutedWater.getVolume()+" liters of water");
 							}
 							
 							// EDAR refuses receiving such a Mass

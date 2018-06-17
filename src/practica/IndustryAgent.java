@@ -8,11 +8,17 @@ import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.FailureException;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+import jade.proto.ContractNetResponder;
 
 
 @SuppressWarnings("serial")
@@ -131,6 +137,69 @@ public class IndustryAgent extends Agent {
 		
 	}
 	
+	
+	private class ContractNetResponderBehaviour extends ContractNetResponder
+    { 
+        public ContractNetResponderBehaviour(Agent a, MessageTemplate mt)
+        {
+            super(a,mt);
+        }
+        
+        //Method to prive a proposal to the CPF
+        protected ACLMessage prepareResponse(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+                System.out.println("Industry "+getLocalName()+" receives a CFP from "+cfp.getSender().getName()+" to perform action: "+cfp.getContent() + "");
+                if (tankOfWater.getVolume() > 0) {
+                    // We provide a proposal   
+                	 ACLMessage propose = cfp.createReply();
+                    try {
+                    	System.out.println("Industry "+getLocalName()+" proposes "+tankOfWater.getVolume() +" liters of water");
+                        propose.setPerformative(ACLMessage.PROPOSE);
+						propose.setContentObject(tankOfWater);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+                    return propose;
+                }
+                else {
+                    // We refuse to provide a proposal
+                    System.out.println("Industry '"+getLocalName()+" has no water to offer");
+                    throw new RefuseException("noWater");
+                }
+            }
+        	
+        
+        	//Method to perform an action when the agent accepts our proposal
+            protected ACLMessage prepareResultNotification(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+                System.out.println("Industry "+getLocalName()+" accepts proposal and is about to dump water");
+                double v = Double.valueOf(accept.getUserDefinedParameter("volume"));
+                if (tankOfWater.getVolume() > v) {
+                    System.out.println("Industry "+getLocalName()+" succesfully dumps " + v + " liters of water to EDAR");
+                    ACLMessage inform = accept.createReply();
+                    inform.setPerformative(ACLMessage.INFORM);
+                    double ratio = v/tankOfWater.getVolume();
+                    double ss = tankOfWater.getSuspendedSolids()*ratio;
+                    double cod = tankOfWater.getChemicalOxygenDemand()*ratio;
+                    double bod = tankOfWater.getBiologicalOxygenDemand()*ratio;
+                    double tn = tankOfWater.getTotalNitrates()*ratio;
+                    double ts = tankOfWater.getTotalSulfites()*ratio;
+                    WaterMass m = new WaterMass(v, ss, cod, bod, tn, ts);
+                    tankOfWater.substractWaterMass(m);
+                    try {
+						inform.setContentObject(m);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+                    return inform;
+                }
+                else {
+                    System.out.println("Industry "+getLocalName()+" unexpectedly is not able to provide the proposed volume of water");
+                    throw new FailureException("noWater");
+                }
+            }
+    }
+	
+	
 	private AID riverAID;
 	private AID EDARAID;
 	private int riverSection;
@@ -149,12 +218,21 @@ public class IndustryAgent extends Agent {
 	private WaterMass waterToDump;
 	private WaterMass tankOfWater;
 	
+	private void initializeCNI() {
+		MessageTemplate template = MessageTemplate.and(
+		MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+		MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+		addBehaviour(new ContractNetResponderBehaviour(this, template));
+	}
+	
 	protected void setup() {
 		
 		setIndustryParameters();
 		searchRiver();
 		searchEDAR();
 		registerSection();
+		initializeCNI();		 
+		       
 		
 		// Register the behavior of the Agent -> Extract water
 		ExtractWater eW = new ExtractWater(this, 5000);
