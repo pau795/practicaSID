@@ -17,7 +17,7 @@ import jade.lang.acl.UnreadableException;
 
 @SuppressWarnings("serial")
 public class IndustryAgent extends Agent {
-	
+
 	private class ExtractWater extends TickerBehaviour {
 		
 		public ExtractWater(Agent a, long period) {
@@ -28,7 +28,7 @@ public class IndustryAgent extends Agent {
 		protected void onTick() {
 			
 			if(waterExtracted == null) extractWater();
-			if(waterExtracted != null) managePollutedWater();
+			managePollutedWater();
 			
 		}
 
@@ -60,23 +60,54 @@ public class IndustryAgent extends Agent {
 
 		private void managePollutedWater() {
 			
-			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
-			msg.setContent("dump");
-			msg.setSender(getAID());
-			msg.addReceiver(EDARAID);
-			try {
-				msg.setConversationId("dump");
-				msg.setContentObject(waterExtracted);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			send(msg);			
-			System.out.println("Industry " + getLocalName() + " requesting to dump " + waterExtracted.getVolume()+" liters of water to the EDAR");
-
-			ACLMessage msg2 = blockingReceive(3000);
-			if(msg2 != null && msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId().equals("dump")) {
-				System.out.println("Industry " + getLocalName() + " dumps " + waterExtracted.getVolume()+" liters of water to the EDAR");
+			// Try to store the polluted water into the tank 
+			if(waterExtracted != null && tankOfWater.getAvailableVolume() >= waterExtracted.getVolume()) {
+				tankOfWater.addWaterMass(waterExtracted);
+				System.out.println("Industry " + getLocalName() + " has stored " + waterExtracted.getVolume() + " liters of water into the tank");
+				System.out.println("The tank of the industry " + getLocalName() + " stores " + tankOfWater.getVolume() + " liters of water");
 				waterExtracted = null;
+			}
+				
+			// If the tank is more than 70% full try to dump water to the EDAR
+			if(tankOfWater.getWaterRate() > tankThreshold) {
+				
+				// Ask for the available volume of the EDAR
+				ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+				msg.setConversationId("volumeEDAR");
+				msg.setSender(getAID());
+				msg.addReceiver(EDARAID);
+				send(msg);			
+				System.out.println("Industry " + getLocalName() + " asking for the avaiable capacity of water to the EDAR");
+				
+				// Receive the available water of the EDAR and send a water mass
+				ACLMessage msg2 = blockingReceive(1000);
+				if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getConversationId().equals("volumeEDAR")) {
+					double EDARWater = Double.min(Double.valueOf(msg2.getContent()), tankOfWater.getVolume()*0.5);					
+					waterToDump = tankOfWater.getPortion(EDARWater);
+					
+					// The industry try to dump polluted water to the EDAR
+					ACLMessage msg3 = new ACLMessage(ACLMessage.QUERY_IF);
+					msg3.setContent("dump");
+					msg3.setSender(getAID());
+					msg3.addReceiver(EDARAID);
+					msg3.setConversationId("dump");
+					try {
+						msg3.setContentObject(waterToDump);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					send(msg3);			
+					System.out.println("Industry " + getLocalName() + " requesting to dump " + waterToDump.getVolume() + " liters of water to the EDAR");
+
+					// The industry waits for the confirmation that the water to dump has been dumped
+					ACLMessage msg4 = blockingReceive(1000);
+					if(msg4 != null && msg4.getPerformative() == ACLMessage.CONFIRM && msg4.getConversationId().equals("dump")) {
+						System.out.println("Industry " + getLocalName() + " dumps " + waterToDump.getVolume() + " liters of water to the EDAR");
+						tankOfWater.substractWaterMass(waterToDump);
+						System.out.println("The tank of the industry " + getLocalName() + " stores " + tankOfWater.getVolume() + " liters of water after the dump");
+						waterToDump = null;
+					}
+				}
 			}
 		}
 
@@ -110,10 +141,13 @@ public class IndustryAgent extends Agent {
 	private double biologicalOxygenDemand;
 	private double totalSulfites;
 	private double totalNitrates;
+	private double tankThreshold;
 	
-	static private Random r = new Random(); 
+	private Random r = new Random(); 
 	
 	private WaterMass waterExtracted;
+	private WaterMass waterToDump;
+	private WaterMass tankOfWater;
 	
 	protected void setup() {
 		
@@ -138,6 +172,9 @@ public class IndustryAgent extends Agent {
 		totalNitrates = r.nextDouble()*200;
 		totalSulfites = r.nextDouble()*200;
 		waterExtracted = null;
+		tankOfWater = new WaterMass(0,0,0,0,0,0);
+		tankOfWater.setCapacity(5000);
+		tankThreshold = 0.7;
 	}
 
 	private void registerSection() {

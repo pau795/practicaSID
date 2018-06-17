@@ -28,7 +28,7 @@ public class WaterMass implements Serializable {
 	
 	public WaterMass () {
 		
-		r= new Random();		
+		r = new Random();		
 		setVolume(500 + 500*r.nextDouble());
 		setCapacity(1000);
 		
@@ -129,5 +129,47 @@ public class WaterMass implements Serializable {
 		s += "Total Nitrates: " + totalNitrates;
 		return s;
 	}
+
+
+	public double getAvailableVolume() {
+		
+		return capacity - volume;
+	}
+
+
+	public void addWaterMass(WaterMass wM) {
+		this.volume += wM.getVolume();
+		this.suspendedSolids += wM.getSuspendedSolids();
+		this.biologicalOxygenDemand += wM.getBiologicalOxygenDemand();
+		this.chemicalOxygenDemand += wM.getChemicalOxygenDemand();
+		this.totalNitrates += wM.getTotalNitrates();
+		this.totalSulfites += wM.getTotalSulfites(); 
+	}
+
+	public void substractWaterMass(WaterMass wM) {
+
+		this.volume -= wM.getVolume();
+		this.suspendedSolids -= wM.getSuspendedSolids();
+		this.biologicalOxygenDemand -= wM.getBiologicalOxygenDemand();
+		this.chemicalOxygenDemand -= wM.getChemicalOxygenDemand();
+		this.totalNitrates -= wM.getTotalNitrates();
+		this.totalSulfites -= wM.getTotalSulfites();
+	}
+
+	public double getWaterRate() {
+		
+		return volume/capacity;
+	}
+
+
+	public WaterMass getPortion(double v) {
+		
+		double rate = v/volume;
+		WaterMass wM = new WaterMass(v, rate*suspendedSolids, rate*chemicalOxygenDemand, rate*biologicalOxygenDemand, rate*totalNitrates, rate*totalSulfites);
+		wM.setCapacity(wM.getVolume());
+		return wM;
+	}
+
+
 	
 }

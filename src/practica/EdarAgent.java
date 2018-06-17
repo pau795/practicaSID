@@ -28,21 +28,25 @@ public class EdarAgent extends Agent{
 			
 			//Purify water
 			waterToPurify = getWater();
-			System.out.println("\n"+"Water to purify:"+"\n");
-			System.out.println(waterToPurify+"\n");
-			System.out.println("Purifying...");
-			waterToPurify.setSuspendedSolids(waterToPurify.getSuspendedSolids()*sspr);
-			waterToPurify.setChemicalOxygenDemand(waterToPurify.getChemicalOxygenDemand()*codpr);
-			waterToPurify.setBiologicalOxygenDemand(waterToPurify.getBiologicalOxygenDemand()*bodpr);
-			waterToPurify.setTotalNitrates(waterToPurify.getTotalNitrates()*tnpr);
-			waterToPurify.setTotalSulfites(waterToPurify.getTotalSulfites()*tspr);
-			System.out.println("Result:\n"+waterToPurify+"\n");
-			if (isPurified(waterToPurify)) {
-				System.out.println("Water successfully purified");
-				purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
-				waterToPurify = new WaterMass(0,0,0,0,0,0);
-				System.out.println("The purified water tank has " + purifiedWater.getVolume() + " liters of water");
+			if(waterToPurify.getVolume() > 0) {
+				System.out.println("\n"+"Water to purify:"+"\n");
+				System.out.println(waterToPurify+"\n");
+				System.out.println("Purifying...");
+				waterToPurify.setSuspendedSolids(waterToPurify.getSuspendedSolids()*sspr);
+				waterToPurify.setChemicalOxygenDemand(waterToPurify.getChemicalOxygenDemand()*codpr);
+				waterToPurify.setBiologicalOxygenDemand(waterToPurify.getBiologicalOxygenDemand()*bodpr);
+				waterToPurify.setTotalNitrates(waterToPurify.getTotalNitrates()*tnpr);
+				waterToPurify.setTotalSulfites(waterToPurify.getTotalSulfites()*tspr);
+				System.out.println("Result:\n"+waterToPurify+"\n");
+				if (isPurified(waterToPurify)) {
+					System.out.println("Water successfully purified");
+					purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
+					waterToPurify = new WaterMass(0,0,0,0,0,0);
+					System.out.println("The purified water tank has " + purifiedWater.getVolume() + " liters of water");
+				}
 			}
+			
+			else System.out.println("The EDAR has no water to purify");
 			
 			//Pour the water into the river
 			WaterMass m = new WaterMass();
@@ -144,21 +148,30 @@ public class EdarAgent extends Agent{
 		public void action() {
 			ACLMessage  msg = myAgent.receive();
 			if (msg!=null) {
+				
 				ACLMessage reply =msg.createReply();
 				String content =msg.getContent();
+				
+				// If a QUERY_IF is received
 				if (msg.getPerformative()==ACLMessage.QUERY_IF) {
+					
+					// An agent ask to dump a waterMass and the EDAR
 					if (content!=null && msg.getConversationId().equals("dump")) {
 						try {
 							WaterMass m = (WaterMass) msg.getContentObject();
+							
+							// EDAR confirms that can receive such a Mass
 							if (pollutedWater.getVolume() + m.getVolume() <= pollutedWater.getCapacity()) {
 								pollutedWater=WaterMass.mergeWater(m, pollutedWater);
 								reply.setPerformative(ACLMessage.CONFIRM);
 								reply.setContent("The EDAR has received a water mass succesfully");
 								reply.setConversationId("dump");
 								send(reply);
-								System.out.println("The EDAR has received a water mass succesfully");
+								System.out.println("The EDAR has received a water mass from " + msg.getSender().getLocalName() + " succesfully");
 								System.out.println("The polluted water tank has " + pollutedWater.getVolume()+" liters of water");
 							}
+							
+							// EDAR refuses receiving such a Mass
 							else {
 								reply.setPerformative(ACLMessage.REFUSE);
 								reply.setContent("The polluted water tank cannot receive that volume of water");
@@ -169,6 +182,18 @@ public class EdarAgent extends Agent{
 						} catch (UnreadableException e) {
 							e.printStackTrace();
 						}
+					}
+				}
+				
+				// If a QUERY_REF is received
+				else if (msg.getPerformative() == ACLMessage.QUERY_REF) {
+
+					// An agent ask for the available space in the pollutedTank
+					if (msg.getConversationId().equals("volumeEDAR")) {
+						reply.setPerformative(ACLMessage.INFORM_REF);
+						reply.setContent(String.valueOf(pollutedWater.getAvailableVolume()));
+						send(reply);
+						System.out.println("EDAR informs to " + msg.getSender().getLocalName() + " the available volume.");
 					}
 				}
 			}
