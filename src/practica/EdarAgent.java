@@ -1,7 +1,9 @@
 package practica;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -150,8 +152,8 @@ public class EdarAgent extends Agent{
 			ACLMessage  msg = myAgent.receive();
 			if (msg!=null) {
 				
-				ACLMessage reply =msg.createReply();
-				String content =msg.getContent();
+				ACLMessage reply = msg.createReply();
+				String content = msg.getContent();
 				
 				// If a QUERY_IF is received
 				if (msg.getPerformative()==ACLMessage.QUERY_IF) {
@@ -197,10 +199,20 @@ public class EdarAgent extends Agent{
 						System.out.println("EDAR informs to " + msg.getSender().getLocalName() + " the available volume.");
 					}
 				}
+				
+				// If a INFORM_IF is received
+				else if (msg.getPerformative() == ACLMessage.INFORM_IF) {
+					
+					// An industry sends its AID to the EDAR and the EDAR confirms
+					if(msg.getConversationId().equals("Industry")){
+						industries.add(msg.getSender());
+						reply.setPerformative(ACLMessage.CONFIRM);
+						send(reply);
+						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
+					}
+				}
 			}
-			
 		}
-		
 	}
 		
 	private void searchRiver() {
@@ -272,7 +284,7 @@ public class EdarAgent extends Agent{
 		}
 	}
 	
-	private void registerAgent() throws FIPAException {
+	private void registerAgent() {
 		System.out.println("Agent " + getLocalName() + " registering EDAR Sevice");
 	  	DFAgentDescription dfd = new DFAgentDescription();
 	  	dfd.setName(getAID());
@@ -280,7 +292,12 @@ public class EdarAgent extends Agent{
   		sd.setName("Edar");
   		sd.setType("Edar");
   		dfd.addServices(sd);
-  		DFService.register(this, dfd);
+  		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
   		System.out.println("Edar Registered");
 	}
 	
@@ -312,6 +329,7 @@ public class EdarAgent extends Agent{
 	private double tspt = 0.5;		//total sulfites purifiable threshold
 	
 	private double pourRatio = 0.3;	//pour ratio
+	private Set<AID> industries = new HashSet<>();
 
 	
 	private void initialiteTanks() {
@@ -329,12 +347,8 @@ public class EdarAgent extends Agent{
 		initialiteTanks();		
 		registerSection();
 		getSectionCapacity();
-		try {
-			registerAgent();
-		}
-		catch (FIPAException e){
-			e.printStackTrace();
-		}		
+		registerAgent();
+
 		WaterPurifier w = new WaterPurifier(this, 5000);
 		addBehaviour(w);
 		

@@ -246,7 +246,8 @@ public class IndustryAgent extends Agent {
         DFAgentDescription[] results = null;
         
         EDARAID = null;
-        while(EDARAID == null) {
+        boolean EDARHasIndustryName = false;
+        while(EDARAID == null && !EDARHasIndustryName) {
         
 	        // Search the river
 	        try {
@@ -260,6 +261,17 @@ public class IndustryAgent extends Agent {
 	            DFAgentDescription dfd2 = results[0];
 	            EDARAID = dfd2.getName();
 	            System.out.println("Industry " + getLocalName() + " has found the AID of the EDAR and it is: " + EDARAID.getLocalName());
+	            
+	            ACLMessage msg = new ACLMessage(ACLMessage.INFORM_IF);
+				msg.setSender(getAID());
+				msg.addReceiver(EDARAID);
+				msg.setConversationId("Industry");
+				send(msg);
+				System.out.println("Industry " + getLocalName() + " has sended its local name to the EDAR");
+				
+				ACLMessage msg2 = blockingReceive(3000);
+				if(msg2 != null && msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId().equals("Industry"))
+					EDARHasIndustryName = true;
 	        }
 	        else {
 	        	System.out.println("Industry " + getLocalName() + " hasn't found the EDAR.");
