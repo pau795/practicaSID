@@ -39,6 +39,7 @@ public class IndustryAgent extends Agent {
 		}
 
 		private void extractWater() {
+			
 			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
 			msg.setSender(getAID());
 			msg.addReceiver(riverAID);
@@ -50,18 +51,20 @@ public class IndustryAgent extends Agent {
 
 			// If is possible to extract, do it, and inform
 			waterExtracted = null;
-			ACLMessage msg2 = blockingReceive(3000);
-			
+			MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.INFORM_REF);
+			ACLMessage msg2 = myAgent.receive(template);
+			if(msg2 != null) {
 			// Water mass sent from the river to the industry in order to be extracted
-			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getInReplyTo().equals("volume")) {
-				try {
-					waterExtracted = (WaterMass) msg2.getContentObject();
-					polluteWater();
-					System.out.println("Industry " + getLocalName() + " has received and polluted the water.");
-				} catch (UnreadableException e) {
-					e.printStackTrace();
+				if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getInReplyTo() != null && msg2.getInReplyTo().equals("volume")) {
+					try {
+						waterExtracted = (WaterMass) msg2.getContentObject();
+						polluteWater();
+						System.out.println("Industry " + getLocalName() + " has received and polluted the water.");
+					} catch (UnreadableException e) {
+						e.printStackTrace();
+					}
 				}
-			}
+			} else block(2000);
 		}
 
 		private void managePollutedWater() {
@@ -86,34 +89,40 @@ public class IndustryAgent extends Agent {
 				System.out.println("Industry " + getLocalName() + " asking for the avaiable capacity of water to the EDAR");
 				
 				// Receive the available water of the EDAR and send a water mass
-				ACLMessage msg2 = blockingReceive(1000);
-				if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getConversationId().equals("volumeEDAR")) {
-					double EDARWater = Double.min(Double.valueOf(msg2.getContent()), tankOfWater.getVolume()*0.5);					
-					waterToDump = tankOfWater.getPortion(EDARWater);
-					
-					// The industry try to dump polluted water to the EDAR
-					ACLMessage msg3 = new ACLMessage(ACLMessage.QUERY_IF);
-					msg3.setContent("dump");
-					msg3.setSender(getAID());
-					msg3.addReceiver(EDARAID);
-					msg3.setConversationId("dump");
-					try {
-						msg3.setContentObject(waterToDump);
-					} catch (IOException e) {
-						e.printStackTrace();
+				MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.INFORM_REF);
+				ACLMessage msg2 = myAgent.receive(template);
+				if(msg2 != null) {
+					if(msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getConversationId() != null && msg2.getConversationId().equals("volumeEDAR")) {
+						double EDARWater = Double.min(Double.valueOf(msg2.getContent()), tankOfWater.getVolume()*0.5);					
+						waterToDump = tankOfWater.getPortion(EDARWater);
+						
+						// The industry try to dump polluted water to the EDAR
+						ACLMessage msg3 = new ACLMessage(ACLMessage.QUERY_IF);
+						msg3.setContent("dump");
+						msg3.setSender(getAID());
+						msg3.addReceiver(EDARAID);
+						msg3.setConversationId("dump");
+						try {
+							msg3.setContentObject(waterToDump);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						send(msg3);			
+						System.out.println("Industry " + getLocalName() + " requesting to dump " + waterToDump.getVolume() + " liters of water to the EDAR");
+	
+						// The industry waits for the confirmation that the water to dump has been dumped
+						MessageTemplate template2 = MessageTemplate.MatchPerformative(ACLMessage.CONFIRM);
+						ACLMessage msg4 = myAgent.receive(template2);
+						if(msg4 != null) {
+							if(msg4.getPerformative() == ACLMessage.CONFIRM && msg4.getConversationId() != null && msg4.getConversationId().equals("dump")) {
+								System.out.println("Industry " + getLocalName() + " dumps " + waterToDump.getVolume() + " liters of water to the EDAR");
+								tankOfWater.substractWaterMass(waterToDump);
+								System.out.println("The tank of the industry " + getLocalName() + " stores " + tankOfWater.getVolume() + " liters of water after the dump");
+								waterToDump = null;
+							}
+						} else block(2000);
 					}
-					send(msg3);			
-					System.out.println("Industry " + getLocalName() + " requesting to dump " + waterToDump.getVolume() + " liters of water to the EDAR");
-
-					// The industry waits for the confirmation that the water to dump has been dumped
-					ACLMessage msg4 = blockingReceive(1000);
-					if(msg4 != null && msg4.getPerformative() == ACLMessage.CONFIRM && msg4.getConversationId().equals("dump")) {
-						System.out.println("Industry " + getLocalName() + " dumps " + waterToDump.getVolume() + " liters of water to the EDAR");
-						tankOfWater.substractWaterMass(waterToDump);
-						System.out.println("The tank of the industry " + getLocalName() + " stores " + tankOfWater.getVolume() + " liters of water after the dump");
-						waterToDump = null;
-					}
-				}
+				} else block(2000);
 			}
 		}
 
@@ -151,11 +160,10 @@ public class IndustryAgent extends Agent {
                 if (tankOfWater.getVolume() > 0) {
                     // We provide a proposal   
                 	 ACLMessage propose = cfp.createReply();
+                	 propose.setPerformative(ACLMessage.PROPOSE);
                     try {
-                        propose.setPerformative(ACLMessage.PROPOSE);
 						propose.setContentObject(tankOfWater);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
                     System.out.println("Industry "+getLocalName()+" proposes "+tankOfWater.getVolume() +" liters of water");
@@ -173,16 +181,11 @@ public class IndustryAgent extends Agent {
             protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
                 System.out.println("Industry "+getLocalName()+" accepts proposal and is about to dump water");
                 double v = Double.valueOf(accept.getUserDefinedParameter("volume"));
-                if (tankOfWater.getVolume() > v) {
-                    ACLMessage inform = accept.createReply();
+                if (tankOfWater.getVolume() >= v) {
+                    
+                	ACLMessage inform = accept.createReply();
                     inform.setPerformative(ACLMessage.INFORM);
-                    double ratio = v/tankOfWater.getVolume();
-                    double ss = tankOfWater.getSuspendedSolids()*ratio;
-                    double cod = tankOfWater.getChemicalOxygenDemand()*ratio;
-                    double bod = tankOfWater.getBiologicalOxygenDemand()*ratio;
-                    double tn = tankOfWater.getTotalNitrates()*ratio;
-                    double ts = tankOfWater.getTotalSulfites()*ratio;
-                    WaterMass m = new WaterMass(v, ss, cod, bod, tn, ts);
+                    WaterMass m = tankOfWater.getPortion(v);
                     tankOfWater.substractWaterMass(m);
                     try {
 						inform.setContentObject(m);
@@ -219,6 +222,7 @@ public class IndustryAgent extends Agent {
 	private WaterMass tankOfWater;
 	
 	private void initializeCNI() {
+		
 		MessageTemplate template = MessageTemplate.and(
 		MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
 		MessageTemplate.MatchPerformative(ACLMessage.CFP) );
@@ -232,9 +236,9 @@ public class IndustryAgent extends Agent {
 		searchEDAR();
 		registerSection();
 		initializeCNI();		 
-		       
 		
 		// Register the behavior of the Agent -> Extract water
+		
 		ExtractWater eW = new ExtractWater(this, 5000);
 		addBehaviour(eW);
 	}
