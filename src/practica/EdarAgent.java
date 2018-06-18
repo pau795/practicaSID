@@ -19,6 +19,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
 
@@ -171,14 +172,14 @@ public class EdarAgent extends Agent{
 		}
 		
 	    protected void handlePropose(ACLMessage propose,  Vector v) {
-			try {
-		    	WaterMass m = (WaterMass) propose.getContentObject();
-		    	System.out.println("Agent "+propose.getSender().getName()+" proposed "+m.getVolume() + " liters of water");
-
+	    	try {
+				WaterMass m = (WaterMass) propose.getContentObject();
+				System.out.println("Agent "+propose.getSender().getName()+" proposed "+m.getVolume() + " liters of water");
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
-         }
+	    	
+        }
 
         protected void handleRefuse(ACLMessage refuse)
         {
@@ -267,7 +268,11 @@ public class EdarAgent extends Agent{
 		
 		@Override
 		public void action() {
-			ACLMessage  msg = myAgent.receive();
+			MessageTemplate qif = MessageTemplate.MatchPerformative(ACLMessage.QUERY_IF);
+			MessageTemplate qref = MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF);
+			MessageTemplate iif = MessageTemplate.MatchPerformative(ACLMessage.INFORM_IF);
+			MessageTemplate mt = MessageTemplate.or(MessageTemplate.or(qif, qref), iif);
+			ACLMessage  msg = myAgent.receive(mt);
 			if (msg!=null) {
 				
 				ACLMessage reply = msg.createReply();
@@ -470,7 +475,7 @@ public class EdarAgent extends Agent{
 		nResponders=industries.size();
 		ACLMessage cniMessage = new ACLMessage(ACLMessage.CFP);
 		cniMessage.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-		cniMessage.setReplyByDate(new Date(System.currentTimeMillis() + 5000));
+		cniMessage.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
 		for (AID a:industries) cniMessage.addReceiver(a);
 		cniMessage.setContent("waterProposal");
 		return cniMessage;
