@@ -57,7 +57,8 @@ public class EdarAgent extends Agent{
 			//If there is not enough polluted water to work with, make a call for proposals asking for water
 			if (pollutedWater.getVolume() < minPollutedWater && !cfpInProgress) {
 				System.out.println("Doing a call for proposals asking for water to all the industries");
-				ContractNetInitiatorBehaviour cni = new ContractNetInitiatorBehaviour(myAgent, cniMessage);
+				ACLMessage cnim = generateCNIMessage();
+				ContractNetInitiatorBehaviour cni = new ContractNetInitiatorBehaviour(myAgent, cnim);
 				addBehaviour(cni);	
 			}	
 			
@@ -160,6 +161,7 @@ public class EdarAgent extends Agent{
 		}
 		
 		public void onStart(){
+			super.onStart();
 			cfpInProgress=true;
 		}
 		
@@ -316,8 +318,6 @@ public class EdarAgent extends Agent{
 					// An industry sends its AID to the EDAR and the EDAR confirms
 					if(msg.getConversationId().equals("Industry")){
 						industries.add(msg.getSender());
-						cniMessage.addReceiver(msg.getSender());
-						nResponders++;
 						reply.setPerformative(ACLMessage.CONFIRM);
 						send(reply);
 						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
@@ -458,12 +458,14 @@ public class EdarAgent extends Agent{
 		purifiedWater.setCapacity(MaxTankCapacity);
 	}
 	
-	private void initializeCNIMessage() {
+	private ACLMessage generateCNIMessage() {
 		nResponders=industries.size();
-		cniMessage = new ACLMessage(ACLMessage.CFP);
+		ACLMessage cniMessage = new ACLMessage(ACLMessage.CFP);
 		cniMessage.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
 		cniMessage.setReplyByDate(new Date(System.currentTimeMillis() + 5000));
+		for (AID a:industries) cniMessage.addReceiver(a);
 		cniMessage.setContent("waterProposal");
+		return cniMessage;
 	}
 	
 	public void setup() {
@@ -473,7 +475,6 @@ public class EdarAgent extends Agent{
 		registerSection();
 		getSectionCapacity();
 		registerAgent();
-		initializeCNIMessage();
 		
 		WaterPurifier w = new WaterPurifier(this, 5000);
 		addBehaviour(w);
