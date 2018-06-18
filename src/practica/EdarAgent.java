@@ -45,7 +45,7 @@ public class EdarAgent extends Agent{
 				waterToPurify.setBiologicalOxygenDemand(waterToPurify.getBiologicalOxygenDemand()*bodpr);
 				waterToPurify.setTotalNitrates(waterToPurify.getTotalNitrates()*tnpr);
 				waterToPurify.setTotalSulfites(waterToPurify.getTotalSulfites()*tspr);
-				System.out.println("Result:\n"+waterToPurify+"\n");
+				System.out.println("Result:\n\n"+waterToPurify+"\n");
 				if (isPurified(waterToPurify)) {
 					System.out.println("Water successfully purified");
 					purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
@@ -168,13 +168,14 @@ public class EdarAgent extends Agent{
 		
 		public int onEnd() {
 			cfpInProgress=false;
+			System.out.println("Call for proposals ended");
 			return super.onEnd();
 		}
 		
 	    protected void handlePropose(ACLMessage propose,  Vector v) {
 	    	try {
 				WaterMass m = (WaterMass) propose.getContentObject();
-				System.out.println("Agent "+propose.getSender().getName()+" proposed "+m.getVolume() + " liters of water");
+				System.out.println("EDAR has resgistered industry "+propose.getSender().getLocalName()+" proposal of "+m.getVolume() + " liters of water");
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
@@ -183,7 +184,7 @@ public class EdarAgent extends Agent{
 
         protected void handleRefuse(ACLMessage refuse)
         {
-                System.out.println("Agent '"+refuse.getSender().getName()+"' refused");
+                System.out.println("Industry "+refuse.getSender().getLocalName()+" refused to propose");
         }
 
         protected void handleFailure(ACLMessage failure) {
@@ -193,7 +194,7 @@ public class EdarAgent extends Agent{
                         System.out.println("Responder does not exist");
                 }
                 else {
-                        System.out.println("Agent '"+failure.getSender().getName()+"' failed");
+                        System.out.println("Industry "+failure.getSender().getLocalName()+" failed");
                 }
                 // Immediate failure --> we will not receive a response from this agent
                 nResponders--;
@@ -252,8 +253,8 @@ public class EdarAgent extends Agent{
         	try {
 				WaterMass m =(WaterMass) inform.getContentObject();
 				WaterMass.mergeWater(m, pollutedWater);
-	        	System.out.println("Industry '"+inform.getSender().getName()+" has successfully dumped "+ m.getVolume() + " liters of water");
-	        	System.out.println("The polluted water tank has " + pollutedWater.getVolume()+" liters of water");
+	        	System.out.println("Industry "+inform.getSender().getLocalName()+" has successfully dumped "+ m.getVolume() + " liters of water");
+	        	System.out.println("EDAR polluted water tank has " + pollutedWater.getVolume()+" liters of water");
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
@@ -300,10 +301,10 @@ public class EdarAgent extends Agent{
 							// EDAR refuses receiving such a Mass
 							else {
 								reply.setPerformative(ACLMessage.REFUSE);
-								reply.setContent("The polluted water tank cannot receive that volume of water");
+								reply.setContent("EDAR polluted water tank cannot receive that volume of water");
 								reply.setConversationId("dump");
 								send(reply);
-								System.out.println("The polluted water tank cannot receive that volume of water");
+								System.out.println("EDAR polluted water tank cannot receive that volume of water");
 							}		
 						} catch (UnreadableException e) {
 							e.printStackTrace();

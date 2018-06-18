@@ -156,7 +156,7 @@ public class IndustryAgent extends Agent {
         
         //Method to prive a proposal to the CPF
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
-                System.out.println("Industry "+getLocalName()+" receives a CFP from "+cfp.getSender().getName()+" to perform action: "+cfp.getContent() + "");
+                System.out.println("Industry "+getLocalName()+" receives a CFP from "+cfp.getSender().getLocalName()+" to perform the action: "+cfp.getContent() + "");
                 if (tankOfWater.getVolume() > 0) {
                     // We provide a proposal   
                 	 ACLMessage propose = cfp.createReply();
@@ -171,7 +171,7 @@ public class IndustryAgent extends Agent {
                 }
                 else {
                     // We refuse to provide a proposal
-                    System.out.println("Industry '"+getLocalName()+" has no water to offer");
+                    System.out.println("Industry "+getLocalName()+" has no water to offer");
                     throw new RefuseException("noWater");
                 }
             }
@@ -179,7 +179,7 @@ public class IndustryAgent extends Agent {
         
         	//Method to perform an action when the agent accepts our proposal
             protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-                System.out.println("Industry "+getLocalName()+" accepts proposal and is about to dump water");
+                System.out.println("Industry "+getLocalName()+" accepts the deal and is about to dump water");
                 double v = Double.valueOf(accept.getUserDefinedParameter("volume"));
                 if (tankOfWater.getVolume() >= v) {
                     
@@ -192,7 +192,8 @@ public class IndustryAgent extends Agent {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-                    System.out.println("Industry "+getLocalName()+" succesfully dumps " + v + " liters of water to EDAR");
+                    System.out.println("Industry "+getLocalName()+" dumps " + v + " liters of water to EDAR");
+                    System.out.println("The tank of the industry " + getLocalName() + " stores " + tankOfWater.getVolume() + " liters of water after the dump");
                     return inform;
                 }
                 else {
@@ -275,7 +276,7 @@ public class IndustryAgent extends Agent {
 			if(msg2 != null && msg2.getPerformative() == ACLMessage.INFORM_REF && msg2.getContent().equals("section"))
 				riverSection = r.nextInt(Integer.valueOf(msg2.getUserDefinedParameter("section")));
 			System.out.println("Industry " + getLocalName() + " extracts water from section " + riverSection + " of the river");
-			System.out.println("Industry " + getLocalName() + "  extracts " + waterVolume + " liters of water." );
+			System.out.println("Industry " + getLocalName() + " extracts " + waterVolume + " liters of water." );
 		}
 	}
 
