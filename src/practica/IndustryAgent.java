@@ -152,13 +152,13 @@ public class IndustryAgent extends Agent {
                     // We provide a proposal   
                 	 ACLMessage propose = cfp.createReply();
                     try {
-                    	System.out.println("Industry "+getLocalName()+" proposes "+tankOfWater.getVolume() +" liters of water");
                         propose.setPerformative(ACLMessage.PROPOSE);
 						propose.setContentObject(tankOfWater);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+                    System.out.println("Industry "+getLocalName()+" proposes "+tankOfWater.getVolume() +" liters of water");
                     return propose;
                 }
                 else {
@@ -174,7 +174,6 @@ public class IndustryAgent extends Agent {
                 System.out.println("Industry "+getLocalName()+" accepts proposal and is about to dump water");
                 double v = Double.valueOf(accept.getUserDefinedParameter("volume"));
                 if (tankOfWater.getVolume() > v) {
-                    System.out.println("Industry "+getLocalName()+" succesfully dumps " + v + " liters of water to EDAR");
                     ACLMessage inform = accept.createReply();
                     inform.setPerformative(ACLMessage.INFORM);
                     double ratio = v/tankOfWater.getVolume();
@@ -190,6 +189,7 @@ public class IndustryAgent extends Agent {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
+                    System.out.println("Industry "+getLocalName()+" succesfully dumps " + v + " liters of water to EDAR");
                     return inform;
                 }
                 else {

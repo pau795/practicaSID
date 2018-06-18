@@ -171,7 +171,13 @@ public class EdarAgent extends Agent{
 		}
 		
 	    protected void handlePropose(ACLMessage propose,  Vector v) {
-	    	 System.out.println("Agent '"+propose.getSender().getName()+"' proposed '"+propose.getContent() + "'");
+			try {
+		    	WaterMass m = (WaterMass) propose.getContentObject();
+		    	System.out.println("Agent "+propose.getSender().getName()+" proposed "+m.getVolume() + " liters of water");
+
+			} catch (UnreadableException e) {
+				e.printStackTrace();
+			}
          }
 
         protected void handleRefuse(ACLMessage refuse)
@@ -323,7 +329,9 @@ public class EdarAgent extends Agent{
 						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
 					}
 				}
+				
 			}
+			else block();
 		}
 	}
 		
