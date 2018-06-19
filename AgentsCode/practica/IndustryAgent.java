@@ -34,7 +34,7 @@ public class IndustryAgent extends Agent {
 		@Override
 		protected void onTick() {
 			
-			if(waterExtracted == null) extractWater();
+			if(waterExtracted == null && tankOfWater.getAvailableVolume() != 0) extractWater();
 			managePollutedWater();
 			
 		}
@@ -46,9 +46,10 @@ public class IndustryAgent extends Agent {
 			msg.addReceiver(riverAID);
 			msg.setContent("volume");
 			msg.addUserDefinedParameter("section", String.valueOf(riverSection));
-			msg.addUserDefinedParameter("volume", String.valueOf(waterVolume));
+			double v = Double.min(waterVolume, tankOfWater.getAvailableVolume());
+			msg.addUserDefinedParameter("volume", String.valueOf(v));
 			send(msg);
-			System.out.println("Industry " + getLocalName() + " is trying to extract "+ waterVolume +" liters of water");
+			System.out.println("Industry " + getLocalName() + " is trying to extract "+ v +" liters of water");
 
 			// If is possible to extract, do it, and inform
 			waterExtracted = null;

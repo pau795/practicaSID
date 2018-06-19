@@ -50,6 +50,7 @@ public class EdarAgent extends Agent{
 					System.out.println("Water successfully purified");
 					purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
 					waterToPurify = new WaterMass(0,0,0,0,0,0);
+					waterToPurify.setCapacity(MaxPurifiableCapacity);
 					System.out.println("EDAR purified water tank has " + purifiedWater.getVolume() + " liters of water");
 				}
 			}
@@ -476,7 +477,7 @@ public class EdarAgent extends Agent{
 	private WaterMass purifiedWater;
 	
 	private double MaxTankCapacity = 20000;
-	private double MaxPurifiableCapacity = 1000;
+	private double MaxPurifiableCapacity = 8000;
 	
 	//purifiable ratios
 	private double sspr = 1 - 0.8;		//suspended solids purifiable ratio
@@ -495,7 +496,7 @@ public class EdarAgent extends Agent{
 	private double pourRatio = 0.3;	//pour ratio
 	private Set<AID> industries = new HashSet<>();
 	
-	private double minPollutedWater =1000;
+	private double minPollutedWater = 1000;
 	
 	ACLMessage cniMessage;
 	int nResponders;
