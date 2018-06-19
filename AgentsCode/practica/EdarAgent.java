@@ -37,21 +37,26 @@ public class EdarAgent extends Agent{
 			//Purify water
 			waterToPurify = getWater();
 			if(waterToPurify.getVolume() > 0) {
-				System.out.println("\n"+"Water to purify:"+"\n");
-				System.out.println(waterToPurify+"\n");
-				System.out.println("Purifying...");
-				waterToPurify.setSuspendedSolids(waterToPurify.getSuspendedSolids()*sspr);
-				waterToPurify.setChemicalOxygenDemand(waterToPurify.getChemicalOxygenDemand()*codpr);
-				waterToPurify.setBiologicalOxygenDemand(waterToPurify.getBiologicalOxygenDemand()*bodpr);
-				waterToPurify.setTotalNitrates(waterToPurify.getTotalNitrates()*tnpr);
-				waterToPurify.setTotalSulfites(waterToPurify.getTotalSulfites()*tspr);
-				System.out.println("Result:\n\n"+waterToPurify+"\n");
 				if (isPurified(waterToPurify)) {
 					System.out.println("Water successfully purified");
-					purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
-					waterToPurify = new WaterMass(0,0,0,0,0,0);
-					waterToPurify.setCapacity(MaxPurifiableCapacity);
-					System.out.println("EDAR purified water tank has " + purifiedWater.getVolume() + " liters of water");
+					if (purifiedWater.getAvailableVolume()>= waterToPurify.getVolume()) {
+						purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
+						waterToPurify = new WaterMass(0,0,0,0,0,0);
+						waterToPurify.setCapacity(MaxPurifiableCapacity);
+						System.out.println("EDAR purified water tank has " + purifiedWater.getVolume() + " liters of water");
+					}
+					else System.out.println("EDAR purified water tank can not recive more water");
+				}
+				else {
+					System.out.println("\n"+"Water to purify:"+"\n");
+					System.out.println(waterToPurify+"\n");
+					System.out.println("Purifying...");
+					waterToPurify.setSuspendedSolids(waterToPurify.getSuspendedSolids()*sspr);
+					waterToPurify.setChemicalOxygenDemand(waterToPurify.getChemicalOxygenDemand()*codpr);
+					waterToPurify.setBiologicalOxygenDemand(waterToPurify.getBiologicalOxygenDemand()*bodpr);
+					waterToPurify.setTotalNitrates(waterToPurify.getTotalNitrates()*tnpr);
+					waterToPurify.setTotalSulfites(waterToPurify.getTotalSulfites()*tspr);
+					System.out.println("Result:\n\n"+waterToPurify+"\n");
 				}
 			}
 			else System.out.println("The EDAR has no water to purify");
