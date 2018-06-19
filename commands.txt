@@ -1,4 +1,4 @@
-javac -cp lib/jade.jar -d classes AgentsCode/practica/RiverAgent.java AgentsCode/practica/WaterMass.java AgentsCode/practica/EdarAgent.java AgentsCode/practica/IndustryAgent.java AgentsCode/practica/InitJade.java   
+javac -cp lib/jade.jar -d classes AgentsCode/practica/RiverAgent.java AgentsCode/practica/WaterMass.java AgentsCode/practica/EdarAgent.java AgentsCode/practica/IndustryAgent.java AgentsCode/practica/GUIAgent.java AgentsCode/practica/InitJade.java   
 
 2 industrias
 java jade.Boot -gui -agents "river:practica.RiverAgent(5); ind1:practica.IndustryAgent; edar:practica.EdarAgent; ind2:practica.IndustryAgent"

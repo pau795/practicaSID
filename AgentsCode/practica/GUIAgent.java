@@ -1,7 +1,11 @@
 package practica;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.ResourceBundle;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -16,11 +20,15 @@ import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class GUIAgent extends Agent {
@@ -32,49 +40,109 @@ public class GUIAgent extends Agent {
 	public static class Window extends Application {
 		
 		private static Stage stage;
-		private static BarChart<String,Number> bc;
+		private static XYChart.Series<String, Double> EDARSeries;
+		private static XYChart.Series<String, Double> IndustriesSeries;
+		static FXMLController controller;
+		
+		private class FXMLController implements Initializable {
+
+			@FXML public AnchorPane anchor;
+			@FXML public GridPane mainGrid;
+			@FXML public GridPane pollutionGrid;
+			@FXML public BarChart EDARBarChart;
+			@SuppressWarnings("rawtypes")
+			@FXML public BarChart riverBarChart;
+			@SuppressWarnings("rawtypes")
+			@FXML public BarChart indBarChart;
+			
+//			public Label sS;
+//			public Label sSV;
+//			public Label bOD;
+//			public Label bODV;
+//			public Label cOD;
+//			public Label cODV;
+//			public Label tS;
+//			public Label tSV;
+//			public Label tN;
+//			public Label tNV;
+
+			@Override @FXML
+			public void initialize(URL location, ResourceBundle resources) {
+				
+			}
+			
+			@SuppressWarnings("unchecked")
+			public void updateCharts() {
+				EDARBarChart.getData().clear();
+				EDARBarChart.getData().add(EDARSeries);
+				
+				indBarChart.getData().clear();
+				indBarChart.getData().add(IndustriesSeries);
+			}
+			
+		}
 		
 		@Override
         public void start(Stage s) {
 
         	stage = s;
-        	stage.show();
-            updateGUI();
+    	    Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+
+                	FXMLLoader loader = new FXMLLoader();
+                    URL resource = getClass().getResource("/AgentsCode/practica/GUIDist.fxml");
+                    System.out.print("resource: " + resource + "\n");
+                    loader.setLocation(resource);
+                    controller = new FXMLController();
+                    loader.setController(controller);
+                    Parent root = null;
+					
+                    try {
+						root = loader.load();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+                    
+            	    Scene scene  = new Scene(root, 1100, 800);
+                    stage.setScene(scene);
+                    stage.show();
+                }
+            });
         }
 
-        @SuppressWarnings({ "rawtypes", "unchecked" })
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		private static void updateBarChart() {
+			
+			EDARSeries = new XYChart.Series();
+            EDARSeries.getData().add(new XYChart.Data("Polluted Water", pollutedTank.getWaterRate()*100));
+            EDARSeries.getData().add(new XYChart.Data("Purified Water", purifiedWater.getWaterRate()*100));
+            EDARSeries.getData().add(new XYChart.Data("Water To Purify", waterToPurify.getWaterRate()*100));
+            
+            IndustriesSeries = new XYChart.Series();
+            Iterator<AID> it = industries.keySet().iterator();
+			while(it.hasNext()) {
+				AID ind = it.next();
+                String name = ind.getLocalName();
+                IndustriesSeries.getData().add(new XYChart.Data(name, industries.get(ind)*100));
+			}
+			
+			controller.updateCharts();
+		}
+
 		public static void updateGUI() {
         	
         	Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-
-                	stage.setTitle("Agent Overview");
-                    CategoryAxis xAxis = new CategoryAxis();
-                    NumberAxis yAxis = new NumberAxis();
-                    yAxis.setLowerBound(0);
-                    yAxis.setUpperBound(100);
-                    yAxis.setAutoRanging(false);
-                    bc = new BarChart<String,Number>(xAxis,yAxis);
-                    bc.setAnimated(false);
-                    xAxis.setLabel("Water Masses");       
-                    yAxis.setLabel("Volume Fulfilled (%)");
                 	
-                    XYChart.Series series1 = new XYChart.Series();
-                    series1.getData().add(new XYChart.Data("Polluted Water", pollutedTank.getWaterRate()*100));
-                    series1.getData().add(new XYChart.Data("Purified Water", purifiedWater.getWaterRate()*100));
-                    series1.getData().add(new XYChart.Data("Water To Purify", waterToPurify.getWaterRate()*100));
-                    
-                    Iterator<AID> it = industries.keySet().iterator();
-        			while(it.hasNext()) {
-        				AID ind = it.next();
-                        String name = ind.getLocalName();
-                        series1.getData().add(new XYChart.Data(name, industries.get(ind)*100));
-        			}
-                    
-                    Scene scene  = new Scene(bc,800,600);
-                    bc.getData().addAll(series1);
-                    stage.setScene(scene);
+                	updateBarChart();
+//                	grid.add(bc, 0, 0);
+//                	grid.add(bc, 1, 0);
+//                	Scene scene = stage.getScene();
+//                	scene.setRoot(grid);
+//                    stage.setScene(scene);
+//                    stage.show();
                     
                 }
             });
