@@ -5,6 +5,7 @@ import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -146,6 +147,39 @@ public class IndustryAgent extends Agent {
 		
 	}
 	
+	public class MessageReceiver extends CyclicBehaviour {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public MessageReceiver(Agent a) {
+			super(a);
+		}
+		
+		@Override
+		public void action() {
+			
+			MessageTemplate tmp1 = MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF);
+			MessageTemplate tmp2 = MessageTemplate.MatchSender(GUIAID);
+			MessageTemplate tmp3 = MessageTemplate.and(tmp1,tmp2);
+			ACLMessage msg = receive(tmp3);
+			if(msg != null) {
+				if(msg.getConversationId() != null) System.out.println(msg.getConversationId());
+				ACLMessage reply = msg.createReply();
+				if(msg.getPerformative() == ACLMessage.QUERY_REF && msg.getConversationId() != null && msg.getConversationId().equals("tankVolume")) {
+					reply.setPerformative(ACLMessage.INFORM_REF);
+					reply.setContent(String.valueOf(tankOfWater.getWaterRate()));
+					send(reply);
+					System.out.println("Industry " + getLocalName() + " has sent its volume to the GUI");
+				}
+				
+			} else block(2000);
+			
+		}
+		
+	}
 	
 	private class ContractNetResponderBehaviour extends ContractNetResponder
     { 
@@ -206,6 +240,7 @@ public class IndustryAgent extends Agent {
 	
 	private AID riverAID;
 	private AID EDARAID;
+	private AID GUIAID;
 	private int riverSection;
 	
     private double waterVolume;
@@ -235,6 +270,7 @@ public class IndustryAgent extends Agent {
 		setIndustryParameters();
 		searchRiver();
 		searchEDAR();
+		searchGUI();
 		registerSection();
 		initializeCNI();		 
 		
@@ -242,6 +278,9 @@ public class IndustryAgent extends Agent {
 		
 		ExtractWater eW = new ExtractWater(this, 5000);
 		addBehaviour(eW);
+		
+		MessageReceiver mR = new MessageReceiver(this);
+		addBehaviour(mR);
 	}
 
 	private void setIndustryParameters() {
@@ -361,4 +400,54 @@ public class IndustryAgent extends Agent {
 	        }
         }
 	}
+
+	private void searchGUI() {
+		
+		// The behaviour register the type of the service that will search, in this case an EDAR
+		DFAgentDescription dfd = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("GUI");
+		dfd.addServices(sd);
+		
+		// Set the number of results desired to 1
+		SearchConstraints sc = new SearchConstraints();
+		sc.setMaxResults(new Long(1));
+        DFAgentDescription[] results = null;
+        
+        GUIAID = null;
+        boolean GUIHasIndustryName = false;
+        while(GUIAID == null && !GUIHasIndustryName) {
+        
+	        // Search the river
+	        try {
+	            results = DFService.search(this, dfd, sc );
+	            System.out.println("Industry " + getLocalName() + " is searching the GUI");
+	        } catch (FIPAException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        }
+	        if (results.length > 0) {
+	            DFAgentDescription dfd2 = results[0];
+	            GUIAID = dfd2.getName();
+	            System.out.println("Industry " + getLocalName() + " has found the AID of the GUI and it is: " + GUIAID.getLocalName());
+	            
+	            ACLMessage msg = new ACLMessage(ACLMessage.INFORM_REF);
+				msg.setSender(getAID());
+				msg.addReceiver(GUIAID);
+				msg.setConversationId("IndustryID");
+				msg.setContent(String.valueOf(tankOfWater.getVolume()));
+				send(msg);
+				System.out.println("Industry " + getLocalName() + " has sended its local name to the GUI");
+				
+				ACLMessage msg2 = blockingReceive(3000);
+				if(msg2 != null && msg2.getPerformative() == ACLMessage.CONFIRM && msg2.getConversationId().equals("IndustryID"))
+					System.out.println("Industry " + getLocalName() + " has been registered by the GUI");
+					GUIHasIndustryName = true;
+	        }
+	        else {
+	        	System.out.println("Industry " + getLocalName() + " hasn't found the GUI.");
+	        }
+        }
+	}
+
 }

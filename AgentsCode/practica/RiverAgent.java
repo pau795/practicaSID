@@ -13,7 +13,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
 @SuppressWarnings("serial")
-public class AgenteRio extends Agent{
+public class RiverAgent extends Agent{
 	
 	private class MyTicker extends TickerBehaviour{
 		
@@ -71,7 +71,7 @@ public class AgenteRio extends Agent{
 							reply.setContent("capacity");
 							reply.addUserDefinedParameter("capacity",String.valueOf(river.get(0).getCapacity()));
 							reply.setInReplyTo("capacity");
-							System.out.println("Capacity sended from the river to " + msg.getSender().getLocalName());
+							System.out.println("Capacity sent from the river to " + msg.getSender().getLocalName());
 						}
 						
 						// An agent asks for the current volume of the section received as parameter

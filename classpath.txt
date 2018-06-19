@@ -1,4 +1,1 @@
 set classpath=lib\jade.jar;lib\jadeExamples.jar;lib\commons-codec\commons-codec-1.3.jar;classes
-
-
-javac -cp lib/jade.jar -d classes src/practica/AgenteRio.java src/practica/WaterMass.java src/practica/IndustryAgent.java src/practica/EdarAgent.java

@@ -261,9 +261,9 @@ public class EdarAgent extends Agent{
         }
 	}
 	
-	private class MessageReciver extends CyclicBehaviour {
+	private class MessageReceiver extends CyclicBehaviour {
 
-		public MessageReciver(Agent a) {
+		public MessageReceiver(Agent a) {
 			super(a);
 		}
 		
@@ -316,16 +316,49 @@ public class EdarAgent extends Agent{
 				else if (msg.getPerformative() == ACLMessage.QUERY_REF) {
 
 					// An agent ask for the available space in the pollutedTank
-					if (msg.getConversationId().equals("volumeEDAR")) {
+					if (msg.getConversationId() != null && msg.getConversationId().equals("volumeEDAR")) {
 						reply.setPerformative(ACLMessage.INFORM_REF);
 						reply.setContent(String.valueOf(pollutedWater.getAvailableVolume()));
 						send(reply);
 						System.out.println("EDAR informs to " + msg.getSender().getLocalName() + " the available volume.");
 					}
+					
+					else if (msg.getConversationId() != null && msg.getConversationId().equals("pollutedTank")) {
+						reply.setPerformative(ACLMessage.INFORM_REF);
+						try {
+							reply.setContentObject(pollutedWater);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						send(reply);
+						System.out.println("EDAR sends to " + msg.getSender().getLocalName() + " the polluted water.");
+					}
+					
+					else if (msg.getConversationId() != null && msg.getConversationId().equals("purifiedWater")) {
+						reply.setPerformative(ACLMessage.INFORM_REF);
+						try {
+							reply.setContentObject(purifiedWater);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						send(reply);
+						System.out.println("EDAR sends to " + msg.getSender().getLocalName() + " the purified water.");
+					}
+					
+					else if (msg.getConversationId() != null && msg.getConversationId().equals("waterToPurify")) {
+						reply.setPerformative(ACLMessage.INFORM_REF);
+						try {
+							reply.setContentObject(waterToPurify);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						send(reply);
+						System.out.println("EDAR sends to " + msg.getSender().getLocalName() + " the water to purify.");
+					}
 				}
 				
 				// If a INFORM_IF is received
-				else if (msg.getPerformative() == ACLMessage.INFORM_IF) {
+				else if (msg.getPerformative() == ACLMessage.INFORM_IF && msg.getConversationId() != null) {
 					
 					// An industry sends its AID to the EDAR and the EDAR confirms
 					if(msg.getConversationId().equals("Industry")){
@@ -333,6 +366,12 @@ public class EdarAgent extends Agent{
 						reply.setPerformative(ACLMessage.CONFIRM);
 						send(reply);
 						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
+					}
+					
+					else if(msg.getConversationId().equals("GUI")){
+						reply.setPerformative(ACLMessage.CONFIRM);
+						send(reply);
+						System.out.println("EDAR has sent its AID to the GUI Agent");
 					}
 				}
 				
@@ -493,7 +532,7 @@ public class EdarAgent extends Agent{
 		WaterPurifier w = new WaterPurifier(this, 5000);
 		addBehaviour(w);
 		
-		MessageReciver mr = new MessageReciver(this);
+		MessageReceiver mr = new MessageReceiver(this);
 		addBehaviour(mr);
 	}
 }
