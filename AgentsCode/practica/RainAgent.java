@@ -2,9 +2,9 @@ package practica;
 
 import java.io.IOException;
 import java.util.Random;
-
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -78,6 +78,44 @@ public class RainAgent extends Agent{
 		}
 		
 	}
+
+	public class MessageReceiver extends CyclicBehaviour {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public MessageReceiver(Agent a) {
+			super(a);
+		}
+		
+		@Override
+		public void action() {
+			
+			MessageTemplate tmp2 = MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF);
+			ACLMessage msg = receive(tmp2);
+			if(msg != null) {
+				ACLMessage reply = msg.createReply();
+				
+				if(msg.getPerformative() == ACLMessage.QUERY_REF) {
+					
+					if(msg.getConversationId() != null && msg.getConversationId().equals("meteoTank")) {
+						
+						reply.setPerformative(ACLMessage.INFORM_REF);
+						try {
+							reply.setContentObject(meteorologicWaterTank);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						send(reply);
+					}
+				}
+			} else block();
+			
+		}
+		
+	}
 	
 	private void raining(){
 		double waterVolume = minRainVolume + (r.nextDouble()*(maxRainVolume-minRainVolume));
@@ -108,7 +146,6 @@ public class RainAgent extends Agent{
 		}
 		++rainTick;
 	}
-	
 	
 	private void searchRiver() {
 		// The behaviour register the type of the service that will search, in this case a River
@@ -192,18 +229,40 @@ public class RainAgent extends Agent{
 	double tankMaxCapacity = 10000;
 	double tankThreshold = 0.7;
 	
-	Random r=new Random();
+	Random r = new Random();
 	
 	private void initializeTank() {
 		meteorologicWaterTank = new WaterMass(0,0,0,0,0,0);
 		meteorologicWaterTank.setCapacity(tankMaxCapacity);
 	}
 	
+	private void registerAgent() {
+		System.out.println("Agent " + getLocalName() + " registering Rain Sevice");
+	  	DFAgentDescription dfd = new DFAgentDescription();
+	  	dfd.setName(getAID());
+  		ServiceDescription sd = new ServiceDescription();
+  		sd.setName("Rain");
+  		sd.setType("Rain");
+  		dfd.addServices(sd);
+  		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException e) {
+			e.printStackTrace();
+		}
+  		System.out.println("Rain Registered");
+	}
+	
 	protected void setup() {
+		
+		registerAgent();
 		searchRiver();
 		searchEDAR();
 		initializeTank();
+		
 		RainTicker t = new RainTicker(this, 5000);
 		addBehaviour(t);
+		
+		MessageReceiver mR = new MessageReceiver(this);
+		addBehaviour(mR);
 	}
 }

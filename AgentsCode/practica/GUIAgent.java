@@ -2,6 +2,7 @@ package practica;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.ResourceBundle;
@@ -42,6 +43,7 @@ public class GUIAgent extends Agent {
 		private static Stage stage;
 		private static XYChart.Series<String, Double> EDARSeries;
 		private static XYChart.Series<String, Double> IndustriesSeries;
+		private static XYChart.Series<String, Double> riverSeries;
 		static FXMLController controller;
 		
 		private class FXMLController implements Initializable {
@@ -49,6 +51,7 @@ public class GUIAgent extends Agent {
 			@FXML public AnchorPane anchor;
 			@FXML public GridPane mainGrid;
 			@FXML public GridPane pollutionGrid;
+			@SuppressWarnings("rawtypes")
 			@FXML public BarChart EDARBarChart;
 			@SuppressWarnings("rawtypes")
 			@FXML public BarChart riverBarChart;
@@ -78,6 +81,9 @@ public class GUIAgent extends Agent {
 				
 				indBarChart.getData().clear();
 				indBarChart.getData().add(IndustriesSeries);
+				
+				riverBarChart.getData().clear();
+				riverBarChart.getData().add(riverSeries);
 			}
 			
 		}
@@ -91,7 +97,7 @@ public class GUIAgent extends Agent {
                 public void run() {
 
                 	FXMLLoader loader = new FXMLLoader();
-                    URL resource = getClass().getResource("/AgentsCode/practica/GUIDist.fxml");
+                	URL resource = getClass().getClassLoader().getResource("practica/GUIDist.fxml");
                     System.out.print("resource: " + resource + "\n");
                     loader.setLocation(resource);
                     controller = new FXMLController();
@@ -104,7 +110,7 @@ public class GUIAgent extends Agent {
 						e.printStackTrace();
 					}
                     
-            	    Scene scene  = new Scene(root, 1100, 800);
+            	    Scene scene  = new Scene(root, 1100, 700);
                     stage.setScene(scene);
                     stage.show();
                 }
@@ -118,6 +124,7 @@ public class GUIAgent extends Agent {
             EDARSeries.getData().add(new XYChart.Data("Polluted Water", pollutedTank.getWaterRate()*100));
             EDARSeries.getData().add(new XYChart.Data("Purified Water", purifiedWater.getWaterRate()*100));
             EDARSeries.getData().add(new XYChart.Data("Water To Purify", waterToPurify.getWaterRate()*100));
+            EDARSeries.getData().add(new XYChart.Data("Metereological Tank", metereologicalTank.getWaterRate()*100));
             
             IndustriesSeries = new XYChart.Series();
             Iterator<AID> it = industries.keySet().iterator();
@@ -125,6 +132,11 @@ public class GUIAgent extends Agent {
 				AID ind = it.next();
                 String name = ind.getLocalName();
                 IndustriesSeries.getData().add(new XYChart.Data(name, industries.get(ind)*100));
+			}
+			
+			riverSeries = new XYChart.Series();
+			for(int i = 0; i < river.size(); ++i) {
+				riverSeries.getData().add(new XYChart.Data(String.valueOf(i), river.get(i)));
 			}
 			
 			controller.updateCharts();
@@ -137,13 +149,6 @@ public class GUIAgent extends Agent {
                 public void run() {
                 	
                 	updateBarChart();
-//                	grid.add(bc, 0, 0);
-//                	grid.add(bc, 1, 0);
-//                	Scene scene = stage.getScene();
-//                	scene.setRoot(grid);
-//                    stage.setScene(scene);
-//                    stage.show();
-                    
                 }
             });
         	
@@ -161,35 +166,35 @@ public class GUIAgent extends Agent {
 			super(a);
 		}
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public void action() {
 			
 			MessageTemplate tmp2 = MessageTemplate.MatchPerformative(ACLMessage.INFORM_REF);
-//			MessageTemplate tmp3 = MessageTemplate.or(tmp1, tmp2);
 			ACLMessage msg = receive(tmp2);
 			if(msg != null) {
 				ACLMessage reply = msg.createReply();
 				
-				if(msg.getPerformative() == ACLMessage.INFORM_REF && msg.getConversationId() != null && msg.getConversationId() == "IndustryID") {
-					industries.put(msg.getSender(), Double.valueOf(msg.getContent()));
-					reply.setPerformative(ACLMessage.CONFIRM);
-					send(reply);
-					System.out.println("GUI Agent has receive the volume of the industry " + msg.getSender() + " and it is " + Double.valueOf(msg.getContent()));
-				}
-				
-				else if(msg.getPerformative() == ACLMessage.INFORM_REF) {
+				if(msg.getPerformative() == ACLMessage.INFORM_REF) {
+					
+					if(msg.getConversationId() != null && msg.getConversationId() == "IndustryID") {
+						industries.put(msg.getSender(), Double.valueOf(msg.getContent()));
+						reply.setPerformative(ACLMessage.CONFIRM);
+						send(reply);
+						//System.out.println("GUI Agent has receive the volume of the industry " + msg.getSender() + " and it is " + Double.valueOf(msg.getContent()));
+					}
+								
 					
 					if(msg.getConversationId() != null && msg.getConversationId().equals("tankVolume")) {
 						industries.put(msg.getSender(), Double.valueOf(msg.getContent()));
-						System.out.println("GUI receives the tank volume of the industry " + msg.getSender().getLocalName());
+//						System.out.println("GUI receives the tank volume of the industry " + msg.getSender().getLocalName());
 					}
 					
 					else if(msg.getConversationId() != null && msg.getConversationId().equals("pollutedTank")) {
 						try {
 							pollutedTank = (WaterMass) msg.getContentObject();
-							System.out.println("GUI receives the pollutedTank of the EDAR");
+//							System.out.println("GUI receives the pollutedTank of the EDAR");
 						} catch (UnreadableException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
@@ -197,7 +202,7 @@ public class GUIAgent extends Agent {
 					else if(msg.getConversationId() != null && msg.getConversationId().equals("purifiedWater")) {
 						try {
 							purifiedWater = (WaterMass) msg.getContentObject();
-							System.out.println("GUI receives the purified water of the EDAR");
+//							System.out.println("GUI receives the purified water of the EDAR");
 						} catch (UnreadableException e) {
 							e.printStackTrace();
 						}
@@ -206,13 +211,32 @@ public class GUIAgent extends Agent {
 					else if(msg.getConversationId() != null && msg.getConversationId().equals("waterToPurify")) {
 						try {
 							waterToPurify = (WaterMass) msg.getContentObject();
-							System.out.println("GUI receives the water to purify of the EDAR");
+//							System.out.println("GUI receives the water to purify of the EDAR");
+						} catch (UnreadableException e) {
+							e.printStackTrace();
+						}
+					}
+					
+					else if(msg.getConversationId() != null & msg.getConversationId().equals("fullRiver")) {
+						
+						try {
+							river = (ArrayList<Double>) msg.getContentObject();
+//							System.out.println("GUI receives the volume of the river");
+						} catch (UnreadableException e) {
+							e.printStackTrace();
+						}
+					}
+
+					else if(msg.getConversationId() != null & msg.getConversationId().equals("meteoTank")) {
+						
+						try {
+							metereologicalTank = (WaterMass) msg.getContentObject();
+//							System.out.println("GUI receives the volume of the metereologic tank");
 						} catch (UnreadableException e) {
 							e.printStackTrace();
 						}
 					}
 				}
-				
 			} else block();
 			
 		}
@@ -237,7 +261,31 @@ public class GUIAgent extends Agent {
 			updatePollutedTank();
 			updatePurifiedWater();
 			updateWaterToPurify();
+			updateMeteorologicalTank();
+			updateRiver();
 			Window.updateGUI();
+			
+		}
+
+		private void updateMeteorologicalTank() {
+
+			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+			msg.setSender(getAID());
+			msg.addReceiver(rainAID);
+			msg.setConversationId("meteoTank");
+			send(msg);
+//			System.out.println("GUI requesting the volume of the metereological tank");
+			
+		}
+
+		private void updateRiver() {
+
+			ACLMessage msg = new ACLMessage(ACLMessage.QUERY_REF);
+			msg.setSender(getAID());
+			msg.addReceiver(riverAID);
+			msg.setContent("fullRiver");
+			send(msg);
+//			System.out.println("GUI requesting the volume of the river");
 			
 		}
 
@@ -251,7 +299,7 @@ public class GUIAgent extends Agent {
 				msg.setConversationId("tankVolume");
 				msg.addReceiver(ind);
 				send(msg);
-				System.out.println("GUI requesting the volume to industry " + ind.getName());
+//				System.out.println("GUI requesting the volume to industry " + ind.getName());
 			}
 		}
 
@@ -262,7 +310,7 @@ public class GUIAgent extends Agent {
 			msg.addReceiver(EDARAID);
 			msg.setConversationId("pollutedTank");
 			send(msg);
-			System.out.println("GUI requesting the volume of the polluted tank");
+//			System.out.println("GUI requesting the volume of the polluted tank");
 			
 		}
 
@@ -273,7 +321,7 @@ public class GUIAgent extends Agent {
 			msg.addReceiver(EDARAID);
 			msg.setConversationId("purifiedWater");
 			send(msg);
-			System.out.println("GUI requesting the volume of the purified water");
+//			System.out.println("GUI requesting the volume of the purified water");
 			
 		}
 
@@ -284,7 +332,7 @@ public class GUIAgent extends Agent {
 			msg.addReceiver(EDARAID);
 			msg.setConversationId("waterToPurify");
 			send(msg);
-			System.out.println("GUI requesting the volume of the water to purify");
+//			System.out.println("GUI requesting the volume of the water to purify");
 			
 		}
 	}
@@ -292,9 +340,13 @@ public class GUIAgent extends Agent {
 	private static WaterMass pollutedTank;
 	private static WaterMass purifiedWater;
 	private static WaterMass waterToPurify;
+	private static WaterMass metereologicalTank;
+	
+	private static ArrayList<Double> river;
 	
 	private AID riverAID;
 	private AID EDARAID;
+	private AID rainAID;
 	
 	private static LinkedHashMap<AID, Double> industries;
 	
@@ -383,6 +435,40 @@ public class GUIAgent extends Agent {
         }
 	}
 	
+	private void searchRain() {
+		// The behaviour register the type of the service that will search, in this case a River
+		DFAgentDescription dfd = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("Rain");
+		dfd.addServices(sd);
+		
+		// Set the number of results desired to 1
+		SearchConstraints sc = new SearchConstraints();
+		sc.setMaxResults(new Long(1));
+        DFAgentDescription[] results = null;
+        
+        rainAID = null;
+        while(rainAID == null) {
+        
+	        // Search the river
+	        try {
+	            results = DFService.search(this, dfd, sc );
+	            System.out.println("GUI Agent is searching the Rain");
+	        } catch (FIPAException e) {
+	            e.printStackTrace();
+	        }
+	        if (results.length > 0) {
+	            DFAgentDescription dfd2 = results[0];
+	            rainAID = dfd2.getName();
+	            System.out.println("GUI Agent has found the AID of the rain and it is: " + rainAID.getLocalName());
+	        }
+	        else {
+	        	System.out.println("GUI Agent hasn't found the rain.");
+	        }
+        }
+		
+	}
+	
     public static void main(String args[]) {
         
     	Thread t1 = new Thread(new Runnable() {
@@ -399,11 +485,14 @@ public class GUIAgent extends Agent {
 		registerAgent();
 		searchRiver();
 		searchEDAR();
+		searchRain();
 		
 		pollutedTank = new WaterMass(0,0,0,0,0,0);
 		purifiedWater = new WaterMass(0,0,0,0,0,0);
 		waterToPurify = new WaterMass(0,0,0,0,0,0);
+		metereologicalTank = new WaterMass(0,0,0,0,0,0);
 		industries = new LinkedHashMap<>();
+		river = new ArrayList<>();
 		
 		MessageReceiver mr = new MessageReceiver(this);
 		addBehaviour(mr);

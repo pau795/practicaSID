@@ -86,7 +86,6 @@ public class RiverAgent extends Agent{
 								System.out.println("The river section has the volume of water that " + msg.getSender().getLocalName() + " has requested.");
 							}
 							
-							
 							// The river has been requested for a non available volume of water
 							else {
 								reply.setPerformative(ACLMessage.REFUSE);
@@ -94,6 +93,18 @@ public class RiverAgent extends Agent{
 								reply.setInReplyTo("volume");
 								System.out.println("The river section has NOT the volume of water that " + msg.getSender().getLocalName() + " has requested.");
 							}
+						}
+						
+						else if(content != null && content.equals("fullRiver")){
+							
+							ArrayList<Double> rivVol = new ArrayList<>(river.size());
+							for(WaterMass wM : river) {
+								rivVol.add(wM.getVolume());
+							}
+							
+							reply.setContentObject(rivVol);
+							reply.setPerformative(ACLMessage.INFORM_REF);
+							reply.setConversationId("fullRiver");
 						}
 					}
 					
@@ -125,11 +136,13 @@ public class RiverAgent extends Agent{
 							System.out.println("The rain has filled the river with " +v + " liters of water on each section");
 						}
 					}
+					
 					else {
 						reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
 						reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");
 						reply.setInReplyTo("Unknown");
 					}
+					
 					send(reply);
 				}
 				else block();
