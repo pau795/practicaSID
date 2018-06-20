@@ -23,7 +23,7 @@ public class InitJade extends Agent {
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("How many sections should the river has?");
+		System.out.println("How many sections should the river have?");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in) );
 		String sections = "";
 		try {
@@ -61,10 +61,12 @@ public class InitJade extends Agent {
 			args [0] = sections;
 			AgentController acRiver = container.createNewAgent("River", "practica.RiverAgent", args);
 			AgentController acGUI = container.createNewAgent("GUI", "practica.GUIAgent", null);
+			AgentController acRain = container.createNewAgent("Rain", "practica.RainAgent", null);
 			
 			acEDAR.start();
 			acRiver.start();
 			acGUI.start();
+			acRain.start();
 			
 			for(int i = 1; i <= Integer.valueOf(industries); ++i) {
 				AgentController acInd = container.createNewAgent("Industry" + String.valueOf(i), "practica.IndustryAgent", null);

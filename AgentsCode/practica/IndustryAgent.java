@@ -98,7 +98,7 @@ public class IndustryAgent extends Agent {
 						double EDARWater = Double.min(Double.valueOf(msg2.getContent()), tankOfWater.getVolume()*0.5);					
 						waterToDump = tankOfWater.getPortion(EDARWater);
 						
-						// The industry try to dump polluted water to the EDAR
+						// The industry tries to dump polluted water to the EDAR
 						ACLMessage msg3 = new ACLMessage(ACLMessage.QUERY_IF);
 						msg3.setContent("dump");
 						msg3.setSender(getAID());
@@ -446,7 +446,7 @@ public class IndustryAgent extends Agent {
 					GUIHasIndustryName = true;
 	        }
 	        else {
-	        	System.out.println("Industry " + getLocalName() + " hasn't found the GUI.");
+	        	System.out.println("Industry " + getLocalName() + " has not found the GUI.");
 	        }
         }
 	}

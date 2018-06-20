@@ -23,19 +23,14 @@ public class RiverAgent extends Agent{
 		}
 
 		@Override
-		protected void onTick() {										//Fluir del rio
-			int l =  river.size();
-			for (int i = l - 1; i > 0; --i) 
+		protected void onTick() {										//River flow: each tick, each water mass shifts one position to the right
+			for (int i = sections - 1; i > 0; --i) 
 				river.set(i, river.get(i - 1));
 			
 			// First section is always a new waterMass
 			WaterMass m = new WaterMass();
-			river.set(0, m);
-			
-			for (int i = 0; i < l; ++i) 
-				System.out.print(format.format(river.get(i).getVolume()) + " ");		//Print del rio a cada tick
-			
-			System.out.println("");
+			river.set(0, m);		
+			printRiver();
 		}
 	}	
 	
@@ -120,6 +115,16 @@ public class RiverAgent extends Agent{
 							}
 						}
 					}
+					else if (msg.getPerformative() == ACLMessage.INFORM) {
+						if (msg.getConversationId()=="rain") {
+							double v = Double.valueOf(msg.getUserDefinedParameter("rain"));
+							WaterMass m = new WaterMass(v,0,0,0,0,0);
+							for(WaterMass a: river) {
+								WaterMass.mergeWater(m, a);
+							}
+							System.out.println("The rain has filled the river with " +v + " liters of water on each section");
+						}
+					}
 					else {
 						reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
 						reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");
@@ -137,6 +142,11 @@ public class RiverAgent extends Agent{
 		
 	}
 	
+	private void printRiver() {
+		System.out.println("River :\n");
+		for (int i = 0; i < sections; ++i) 	System.out.print(format.format(river.get(i).getVolume()) + " ");
+		System.out.println("\n");
+	}
 	
 	private ArrayList<WaterMass> river;
 	private int sections; //longitud rio;
@@ -184,9 +194,6 @@ public class RiverAgent extends Agent{
 	}
 	
 	protected void takeDown() {
-		for (int i = 0; i < sections; ++i) 
-			System.out.print(format.format(river.get(i).getVolume()) + " ");
-		
-		System.out.println();
+		printRiver();
 	}
 }
