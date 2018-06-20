@@ -22,7 +22,7 @@
             <RowConstraints maxHeight="369.6666564941406" minHeight="10.0" prefHeight="252.33334350585938" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <BarChart id="EDARBarChart" fx:id="EDARBarChart" animated="false" legendVisible="false" title="EDAR">
+            <BarChart id="" fx:id="EDARBarChart" animated="false" legendVisible="false" title="EDAR">
               <xAxis>
                 <CategoryAxis side="BOTTOM" />
               </xAxis>
@@ -36,7 +36,7 @@
                   <Insets bottom="20.0" />
                </padding>
             </BarChart>
-            <BarChart id="industries" fx:id="indBarChart" animated="false" legendVisible="false" title="Industries" GridPane.columnSpan="2" GridPane.rowIndex="1">
+            <BarChart id="" fx:id="indBarChart" animated="false" legendVisible="false" title="Industries" GridPane.columnSpan="2" GridPane.rowIndex="1">
                <xAxis>
                   <CategoryAxis side="BOTTOM" />
                </xAxis>
@@ -44,7 +44,7 @@
                   <NumberAxis autoRanging="false" label="Volume (%)" minorTickVisible="false" side="LEFT" tickLength="10.0" />
                </yAxis>
             </BarChart>
-            <BarChart id="river" fx:id="riverBarChart" animated="false" legendVisible="false" title="River Flow" GridPane.columnSpan="2" GridPane.rowIndex="2">
+            <BarChart id="" fx:id="riverBarChart" animated="false" legendVisible="false" title="River Flow" GridPane.columnSpan="2" GridPane.rowIndex="2">
                <xAxis>
                   <CategoryAxis side="BOTTOM" />
                </xAxis>
