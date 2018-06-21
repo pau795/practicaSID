@@ -44,29 +44,13 @@
                   <NumberAxis autoRanging="false" label="Volume (%)" minorTickVisible="false" side="LEFT" tickLength="10.0" />
                </yAxis>
             </BarChart>
-            <BarChart id="" fx:id="riverBarChart" animated="false" legendVisible="false" title="River Flow" GridPane.columnSpan="2" GridPane.rowIndex="2">
-               <xAxis>
-                  <CategoryAxis side="BOTTOM" />
-               </xAxis>
-               <yAxis>
-                  <NumberAxis autoRanging="false" label="Volume (%)" minorTickCount="50" minorTickLength="50.0" minorTickVisible="false" side="LEFT" tickLength="10.0" tickUnit="100.0" upperBound="1000.0" />
-               </yAxis>
-               <opaqueInsets>
-                  <Insets />
-               </opaqueInsets>
-               <GridPane.margin>
-                  <Insets />
-               </GridPane.margin>
-               <padding>
-                  <Insets bottom="10.0" />
-               </padding>
-            </BarChart>
-            <GridPane alignment="CENTER_LEFT" style="-fx-border-color: #999999; -fx-border-width: 1; -fx-grid-lines-visible: true;" GridPane.columnIndex="1">
+            <GridPane alignment="CENTER" hgap="20.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="241.0" prefWidth="400.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
               <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
               </columnConstraints>
               <rowConstraints>
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -76,71 +60,99 @@
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="WaterMass" textFill="#363434">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Volume Rate" textFill="#62696b" GridPane.rowIndex="2">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Volume" textFill="#363434" GridPane.rowIndex="1">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="WaterMass" textFill="#62696b">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma Bold" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Suspended Solids" textFill="#363434" GridPane.rowIndex="2">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Volume" textFill="#62696b" GridPane.rowIndex="1">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Chemical Oxygen Demand" textFill="#363434" GridPane.rowIndex="3">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Suspended Solids" textFill="#62696b" GridPane.rowIndex="3">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Biological Oxygen Demand" textFill="#363434" GridPane.rowIndex="4">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Chemical Oxygen Demand" textFill="#62696b" GridPane.rowIndex="4">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Total Sulfites" textFill="#363434" GridPane.rowIndex="5">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Biological Oxygen Demand" textFill="#62696b" GridPane.rowIndex="5">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Total Nitrates" textFill="#363434" GridPane.rowIndex="6">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Total Sulfites" textFill="#62696b" GridPane.rowIndex="6">
                      <font>
-                        <Font name="Segoe UI Light" size="13.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#363434" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                  <Label alignment="CENTER_RIGHT" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" text="Total Nitrates" textFill="#62696b" GridPane.rowIndex="7">
                      <font>
-                        <Font name="Segoe UI Light" size="17.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#363434" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                  <Label fx:id="sSLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="3">
                      <font>
-                        <Font name="Segoe UI Light" size="17.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#363434" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                  <Label fx:id="cODLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="4">
                      <font>
-                        <Font name="Segoe UI Light" size="17.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#363434" GridPane.columnIndex="1" GridPane.rowIndex="5">
+                  <Label fx:id="bODLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="5">
                      <font>
-                        <Font name="Segoe UI Light" size="17.0" />
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#363434" GridPane.columnIndex="1" GridPane.rowIndex="6">
+                  <Label fx:id="tSLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="6">
                      <font>
-                        <Font name="Segoe UI Light" size="17.0" />
+                        <Font name="Tahoma" size="14.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="tNLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="7">
+                     <font>
+                        <Font name="Tahoma" size="14.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="waterNameLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1">
+                     <font>
+                        <Font name="Tahoma Bold" size="14.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="volumeLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <font>
+                        <Font name="Tahoma" size="14.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="volumeRateLab" contentDisplay="CENTER" prefHeight="84.0" prefWidth="253.0" textFill="#62696b" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <font>
+                        <Font name="Tahoma" size="14.0" />
                      </font>
                   </Label>
                </children>
                <padding>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                </padding>
             </GridPane>
+            <AreaChart fx:id="riverAreaChart" animated="false" legendVisible="false" title="River Flow" GridPane.columnSpan="2" GridPane.rowIndex="2">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis label="Volume (liters)" minorTickCount="50" minorTickLength="50.0" side="LEFT" tickLabelGap="5.0" tickLength="5.0" tickUnit="100.0" upperBound="1000.0" />
+              </yAxis>
+            </AreaChart>
          </children>
          <padding>
             <Insets bottom="20.0" left="50.0" right="50.0" top="20.0" />

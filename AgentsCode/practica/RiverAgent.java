@@ -193,7 +193,7 @@ public class RiverAgent extends Agent{
 		for (int i = 0; i < sections; ++i)					
 			river.add(new WaterMass());		
 		
-		MyTicker ticker = new MyTicker(this, 3000);
+		MyTicker ticker = new MyTicker(this, 1000);
 		addBehaviour(ticker);
 		
 		MsgRiver mr = new MsgRiver(this);

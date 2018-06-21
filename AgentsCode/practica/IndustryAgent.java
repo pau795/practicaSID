@@ -167,13 +167,16 @@ public class IndustryAgent extends Agent {
 			MessageTemplate tmp3 = MessageTemplate.and(tmp1,tmp2);
 			ACLMessage msg = receive(tmp3);
 			if(msg != null) {
-				if(msg.getConversationId() != null) System.out.println(msg.getConversationId());
 				ACLMessage reply = msg.createReply();
 				if(msg.getPerformative() == ACLMessage.QUERY_REF && msg.getConversationId() != null && msg.getConversationId().equals("tankVolume")) {
 					reply.setPerformative(ACLMessage.INFORM_REF);
-					reply.setContent(String.valueOf(tankOfWater.getWaterRate()));
+					try {
+						reply.setContentObject(tankOfWater);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 					send(reply);
-					System.out.println("Industry " + getLocalName() + " has sent its volume to the GUI");
+					System.out.println("Industry " + getLocalName() + " has sent its tank of water to the GUI");
 				}
 				
 			} else block(2000);
@@ -252,7 +255,7 @@ public class IndustryAgent extends Agent {
 	private double totalNitrates;
 	private double tankThreshold;
 	
-	private Random r = new Random(); 
+	private Random r = new Random();
 	
 	private WaterMass waterExtracted;
 	private WaterMass waterToDump;
@@ -436,7 +439,12 @@ public class IndustryAgent extends Agent {
 				msg.setSender(getAID());
 				msg.addReceiver(GUIAID);
 				msg.setConversationId("IndustryID");
-				msg.setContent(String.valueOf(tankOfWater.getVolume()));
+				try {
+					msg.setContentObject(tankOfWater);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				send(msg);
 				System.out.println("Industry " + getLocalName() + " has sended its local name to the GUI");
 				

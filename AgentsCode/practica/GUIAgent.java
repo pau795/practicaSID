@@ -2,6 +2,7 @@ package practica;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -21,13 +22,19 @@ import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Label;
+import javafx.scene.effect.Glow;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
@@ -54,20 +61,19 @@ public class GUIAgent extends Agent {
 			@SuppressWarnings("rawtypes")
 			@FXML public BarChart EDARBarChart;
 			@SuppressWarnings("rawtypes")
-			@FXML public BarChart riverBarChart;
+			@FXML public AreaChart riverAreaChart;
 			@SuppressWarnings("rawtypes")
 			@FXML public BarChart indBarChart;
+			private String activeBar = null;
 			
-//			public Label sS;
-//			public Label sSV;
-//			public Label bOD;
-//			public Label bODV;
-//			public Label cOD;
-//			public Label cODV;
-//			public Label tS;
-//			public Label tSV;
-//			public Label tN;
-//			public Label tNV;
+			@FXML public Label sSLab;
+			@FXML public Label bODLab;
+			@FXML public Label cODLab;
+			@FXML public Label tSLab;
+			@FXML public Label tNLab;
+			@FXML public Label waterNameLab;
+			@FXML public Label volumeLab;
+			@FXML public Label volumeRateLab;
 
 			@Override @FXML
 			public void initialize(URL location, ResourceBundle resources) {
@@ -78,12 +84,68 @@ public class GUIAgent extends Agent {
 			public void updateCharts() {
 				EDARBarChart.getData().clear();
 				EDARBarChart.getData().add(EDARSeries);
+				setupHover(EDARSeries);
+				setupHover(EDARSeries);
+				setupHover(EDARSeries);
 				
 				indBarChart.getData().clear();
 				indBarChart.getData().add(IndustriesSeries);
+				setupHover(IndustriesSeries);
+				setupHover(IndustriesSeries);
+				setupHover(IndustriesSeries);
 				
-				riverBarChart.getData().clear();
-				riverBarChart.getData().add(riverSeries);
+				riverAreaChart.getData().clear();
+				riverAreaChart.getData().add(riverSeries);
+			}
+			
+			public void updateInfoWaterMass() {
+				
+				if(activeBar != null) {
+					AID aid = new AID(activeBar, false);
+					WaterMass wM = industries.get(aid);
+					if(wM == null) {
+						if(activeBar.equals("Polluted Water")) wM = pollutedTank;
+						else if(activeBar.equals("Purified Water")) wM = purifiedWater;
+						else if(activeBar.equals("Water To Purify")) wM = waterToPurify;
+						else if(activeBar.equals("Metereological Tank")) wM = metereologicalTank;
+					}
+					if(wM != null) {
+						sSLab.setText(String.valueOf(dF.format(wM.getSuspendedSolids())) + " mg/l");
+						bODLab.setText(String.valueOf(dF.format(wM.getBiologicalOxygenDemand())) + " mg/l");
+						cODLab.setText(String.valueOf(dF.format(wM.getChemicalOxygenDemand())) + " mg/l");
+						tSLab.setText(String.valueOf(dF.format(wM.getTotalSulfites())) + " mg/l");
+						tNLab.setText(String.valueOf(dF.format(wM.getTotalNitrates())) + " mg/l");
+						waterNameLab.setText(activeBar);
+						volumeLab.setText(String.valueOf(dF.format(wM.getVolume())) + " m3");
+						volumeRateLab.setText(String.valueOf(dF.format(wM.getWaterRate()*100)) + " %");
+					}
+				}
+			}
+			
+//			private final Glow glowHover = new Glow(.6);
+			private final Glow glowClick = new Glow(.9);
+
+			private void setupHover(XYChart.Series<String, Double> series) {
+			    for (final XYChart.Data<String, Double> dt : series.getData()) {
+			        final Node n = dt.getNode();
+
+			        n.setEffect(null);
+			        n.setOnMouseExited(new EventHandler<MouseEvent>() {
+			            @Override
+			            public void handle(MouseEvent e) {
+			                n.setEffect(null);
+			            }
+			        });
+			        n.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			            @Override
+			            public void handle(MouseEvent e) {
+			            	n.setEffect(glowClick);
+			            	activeBar = dt.getXValue();
+		            		updateInfoWaterMass();
+			            }
+			        });
+			        
+			    }
 			}
 			
 		}
@@ -131,7 +193,7 @@ public class GUIAgent extends Agent {
 			while(it.hasNext()) {
 				AID ind = it.next();
                 String name = ind.getLocalName();
-                IndustriesSeries.getData().add(new XYChart.Data(name, industries.get(ind)*100));
+                IndustriesSeries.getData().add(new XYChart.Data(name, industries.get(ind).getWaterRate()*100));
 			}
 			
 			riverSeries = new XYChart.Series();
@@ -149,6 +211,7 @@ public class GUIAgent extends Agent {
                 public void run() {
                 	
                 	updateBarChart();
+                	controller.updateInfoWaterMass();
                 }
             });
         	
@@ -177,8 +240,12 @@ public class GUIAgent extends Agent {
 				
 				if(msg.getPerformative() == ACLMessage.INFORM_REF) {
 					
-					if(msg.getConversationId() != null && msg.getConversationId() == "IndustryID") {
-						industries.put(msg.getSender(), Double.valueOf(msg.getContent()));
+					if(msg.getConversationId() != null && msg.getConversationId().equals("IndustryID")) {
+						try {
+							industries.put(msg.getSender(), (WaterMass) msg.getContentObject());
+						} catch (UnreadableException e) {
+							e.printStackTrace();
+						}
 						reply.setPerformative(ACLMessage.CONFIRM);
 						send(reply);
 						//System.out.println("GUI Agent has receive the volume of the industry " + msg.getSender() + " and it is " + Double.valueOf(msg.getContent()));
@@ -186,7 +253,12 @@ public class GUIAgent extends Agent {
 								
 					
 					if(msg.getConversationId() != null && msg.getConversationId().equals("tankVolume")) {
-						industries.put(msg.getSender(), Double.valueOf(msg.getContent()));
+						try {
+							industries.put(msg.getSender(), (WaterMass) msg.getContentObject());
+						} catch (UnreadableException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 //						System.out.println("GUI receives the tank volume of the industry " + msg.getSender().getLocalName());
 					}
 					
@@ -341,14 +413,15 @@ public class GUIAgent extends Agent {
 	private static WaterMass purifiedWater;
 	private static WaterMass waterToPurify;
 	private static WaterMass metereologicalTank;
-	
+	private static DecimalFormat dF = new DecimalFormat("0.00");
 	private static ArrayList<Double> river;
+	
 	
 	private AID riverAID;
 	private AID EDARAID;
 	private AID rainAID;
 	
-	private static LinkedHashMap<AID, Double> industries;
+	private static LinkedHashMap<AID, WaterMass> industries;
 	
 	private void registerAgent() {
 		System.out.println("Agent " + getLocalName() + " registering GUI Sevice");
@@ -497,7 +570,7 @@ public class GUIAgent extends Agent {
 		MessageReceiver mr = new MessageReceiver(this);
 		addBehaviour(mr);
 		
-		UpdateGUI uGUI = new UpdateGUI(this, 2000);
+		UpdateGUI uGUI = new UpdateGUI(this, 1000);
 		addBehaviour(uGUI);
 		
 		String[] args = null;
