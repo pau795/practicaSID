@@ -335,6 +335,7 @@ public class EdarAgent extends Agent{
 						System.out.println("EDAR informs to " + msg.getSender().getLocalName() + " the available volume.");
 					}
 					
+					// An agent ask for the pollutedTank as a WaterMass
 					else if (msg.getConversationId() != null && msg.getConversationId().equals("pollutedTank")) {
 						reply.setPerformative(ACLMessage.INFORM_REF);
 						try {
@@ -346,6 +347,7 @@ public class EdarAgent extends Agent{
 						System.out.println("EDAR sends to " + msg.getSender().getLocalName() + " the polluted water.");
 					}
 					
+					// An agent ask for the purifiedWater as a WaterMass
 					else if (msg.getConversationId() != null && msg.getConversationId().equals("purifiedWater")) {
 						reply.setPerformative(ACLMessage.INFORM_REF);
 						try {
@@ -357,6 +359,7 @@ public class EdarAgent extends Agent{
 						System.out.println("EDAR sends to " + msg.getSender().getLocalName() + " the purified water.");
 					}
 					
+					// An agent ask for the waterToPurify as a WaterMass
 					else if (msg.getConversationId() != null && msg.getConversationId().equals("waterToPurify")) {
 						reply.setPerformative(ACLMessage.INFORM_REF);
 						try {
@@ -379,6 +382,8 @@ public class EdarAgent extends Agent{
 						send(reply);
 						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
 					}
+					
+					// Industry unregistered
 					else if (msg.getConversationId().equals("down")) {
 						industries.remove(msg.getSender());
 						System.out.println("EDAR has removed industry " +msg.getSender().getLocalName()+" from his list");

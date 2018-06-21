@@ -110,11 +110,11 @@ public class GUIAgent extends Agent {
 						else if(activeBar.equals("Metereological Tank")) wM = metereologicalTank;
 					}
 					if(wM != null) {
-						sSLab.setText(String.valueOf(dF.format(wM.getSuspendedSolids())) + " mg/l");
-						bODLab.setText(String.valueOf(dF.format(wM.getBiologicalOxygenDemand())) + " mg/l");
-						cODLab.setText(String.valueOf(dF.format(wM.getChemicalOxygenDemand())) + " mg/l");
-						tSLab.setText(String.valueOf(dF.format(wM.getTotalSulfites())) + " mg/l");
-						tNLab.setText(String.valueOf(dF.format(wM.getTotalNitrates())) + " mg/l");
+						sSLab.setText(String.valueOf(dF.format(wM.getSuspendedSolids())) + " g");
+						bODLab.setText(String.valueOf(dF.format(wM.getBiologicalOxygenDemand())) + " g");
+						cODLab.setText(String.valueOf(dF.format(wM.getChemicalOxygenDemand())) + " g");
+						tSLab.setText(String.valueOf(dF.format(wM.getTotalSulfites())) + " g");
+						tNLab.setText(String.valueOf(dF.format(wM.getTotalNitrates())) + " g");
 						waterNameLab.setText(activeBar);
 						volumeLab.setText(String.valueOf(dF.format(wM.getVolume())) + " m3");
 						volumeRateLab.setText(String.valueOf(dF.format(wM.getWaterRate()*100)) + " %");
@@ -233,8 +233,10 @@ public class GUIAgent extends Agent {
 		@Override
 		public void action() {
 			
+			MessageTemplate tmp1 = MessageTemplate.MatchPerformative(ACLMessage.INFORM_IF);
 			MessageTemplate tmp2 = MessageTemplate.MatchPerformative(ACLMessage.INFORM_REF);
-			ACLMessage msg = receive(tmp2);
+			MessageTemplate tmp3 = MessageTemplate.or(tmp1,tmp2);
+			ACLMessage msg = receive(tmp3);
 			if(msg != null) {
 				ACLMessage reply = msg.createReply();
 				
@@ -309,6 +311,14 @@ public class GUIAgent extends Agent {
 						}
 					}
 				}
+				
+				else if (msg.getPerformative() == ACLMessage.INFORM_IF) {
+					if(msg.getConversationId() != null && msg.getConversationId().equals("down")) {
+						industries.remove(msg.getSender());
+						System.out.println("GUI has removed industry " +msg.getSender().getLocalName()+" from his list");
+					}
+				}
+				
 			} else block();
 			
 		}

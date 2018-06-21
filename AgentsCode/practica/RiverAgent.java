@@ -34,7 +34,6 @@ public class RiverAgent extends Agent{
 		}
 	}	
 	
-	
 	private class MsgRiver extends CyclicBehaviour {
 		public MsgRiver(Agent a) {
 			super(a);
@@ -95,6 +94,7 @@ public class RiverAgent extends Agent{
 							}
 						}
 						
+						// GUI request the full river in order to show it
 						else if(content != null && content.equals("fullRiver")){
 							
 							ArrayList<Double> rivVol = new ArrayList<>(river.size());
@@ -108,8 +108,11 @@ public class RiverAgent extends Agent{
 						}
 					}
 					
+					// If river receives a QUERY_IF
 					else if (msg.getPerformative()== ACLMessage.QUERY_IF){
 						String content = msg.getContent();
+						
+						// The river receives purified mass of water from the EDAR
 						if (content != null  && msg.getConversationId().equals("purified")) {
 							int s = Integer.valueOf(msg.getUserDefinedParameter("section"));
 							WaterMass m = (WaterMass) msg.getContentObject();
@@ -126,7 +129,11 @@ public class RiverAgent extends Agent{
 							}
 						}
 					}
+					
+					// If river receives a INFORM
 					else if (msg.getPerformative() == ACLMessage.INFORM) {
+						
+						// The river receive water from rain
 						if (msg.getConversationId()=="rain") {
 							double v = Double.valueOf(msg.getUserDefinedParameter("rain"));
 							WaterMass m = new WaterMass(v,0,0,0,0,0);
@@ -137,6 +144,7 @@ public class RiverAgent extends Agent{
 						}
 					}
 					
+					// Message not understood
 					else {
 						reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
 						reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");
@@ -162,7 +170,7 @@ public class RiverAgent extends Agent{
 	}
 	
 	private ArrayList<WaterMass> river;
-	private int sections; //longitud rio;
+	private int sections;
 	DecimalFormat format = new DecimalFormat("0.00");
 		
 	protected void setup() {

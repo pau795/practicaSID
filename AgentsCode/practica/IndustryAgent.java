@@ -292,8 +292,10 @@ public class IndustryAgent extends Agent {
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM_IF);
 		msg.setSender(getAID());
 		msg.addReceiver(EDARAID);
+		msg.addReceiver(GUIAID);
 		msg.setConversationId("down");
 		send(msg);
+		
 		
 	}
 
