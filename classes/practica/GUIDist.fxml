@@ -150,7 +150,7 @@
                 <CategoryAxis side="BOTTOM" />
               </xAxis>
               <yAxis>
-                <NumberAxis label="Volume (m3)" minorTickCount="50" minorTickLength="50.0" side="LEFT" tickLabelGap="5.0" tickLength="5.0" tickUnit="100.0" upperBound="1000.0" />
+                <NumberAxis label="Volume (liters)" minorTickCount="50" minorTickLength="50.0" side="LEFT" tickLabelGap="5.0" tickLength="5.0" tickUnit="100.0" upperBound="1000.0" />
               </yAxis>
             </AreaChart>
          </children>

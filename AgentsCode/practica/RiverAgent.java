@@ -171,6 +171,7 @@ public class RiverAgent extends Agent{
 	
 	private ArrayList<WaterMass> river;
 	private int sections;
+	private int period;
 	DecimalFormat format = new DecimalFormat("0.00");
 		
 	protected void setup() {
@@ -195,22 +196,24 @@ public class RiverAgent extends Agent{
 		river = new ArrayList<WaterMass>();
 		
 		Object[] args = getArguments();
-		if (args.length == 1 ) sections = Integer.valueOf((String) args[0]); //la longitud del rio viene determinada por el primer parametro
-		else sections = 20; //longitud predeterminada si no hay parametros	
+		if (args.length == 2) {
+			sections = Integer.valueOf((String) args[0]); 
+			period = Integer.valueOf((String) args[1]);
+		}
+		else {
+			sections = 20;
+			period = 3000;
+		}
 		
 		for (int i = 0; i < sections; ++i)					
 			river.add(new WaterMass());		
 		
-		MyTicker ticker = new MyTicker(this, 1000);
+		MyTicker ticker = new MyTicker(this, period);
 		addBehaviour(ticker);
 		
 		MsgRiver mr = new MsgRiver(this);
 		addBehaviour(mr);
-		
-		
-		for (int i=0; i<sections; ++i) 
-			System.out.print(format.format(river.get(i).getVolume()) + " ");  //Test del rio inicial
-		
+				
 		System.out.println("");
 	}
 	

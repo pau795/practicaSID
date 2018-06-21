@@ -176,7 +176,6 @@ public class IndustryAgent extends Agent {
 						e.printStackTrace();
 					}
 					send(reply);
-					System.out.println("Industry " + getLocalName() + " has sent its tank of water to the GUI");
 				}
 				
 			} else block(2000);
@@ -255,6 +254,8 @@ public class IndustryAgent extends Agent {
 	private double totalNitrates;
 	private double tankThreshold;
 	
+	private int period;
+	
 	private Random r = new Random();
 	
 	private WaterMass waterExtracted;
@@ -280,7 +281,11 @@ public class IndustryAgent extends Agent {
 		
 		// Register the behavior of the Agent -> Extract water
 		
-		ExtractWater eW = new ExtractWater(this, 5000);
+		Object[] args = getArguments();
+		if (args.length==1) period = Integer.valueOf((String) args[0]);
+		else period = 3000;
+		
+		ExtractWater eW = new ExtractWater(this, period);
 		addBehaviour(eW);
 		
 		MessageReceiver mR = new MessageReceiver(this);

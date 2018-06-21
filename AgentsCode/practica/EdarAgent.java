@@ -518,6 +518,8 @@ public class EdarAgent extends Agent{
 	
 	private double minPollutedWater = 1000;
 	
+	private int period;
+	
 	ACLMessage cniMessage;
 	int nResponders;
 	boolean cfpInProgress=false;
@@ -550,7 +552,11 @@ public class EdarAgent extends Agent{
 		getSectionCapacity();
 		registerAgent();
 		
-		WaterPurifier w = new WaterPurifier(this, 5000);
+		Object[] args = getArguments();
+		if (args.length==1) period = Integer.valueOf((String) args[0]);
+		else period = 3000;
+		
+		WaterPurifier w = new WaterPurifier(this, period);
 		addBehaviour(w);
 		
 		MessageReceiver mr = new MessageReceiver(this);

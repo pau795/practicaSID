@@ -229,6 +229,8 @@ public class RainAgent extends Agent{
 	double tankMaxCapacity = 10000;
 	double tankThreshold = 0.7;
 	
+	int period;
+	
 	Random r = new Random();
 	
 	private void initializeTank() {
@@ -259,7 +261,11 @@ public class RainAgent extends Agent{
 		searchEDAR();
 		initializeTank();
 		
-		RainTicker t = new RainTicker(this, 5000);
+		Object[] args = getArguments();
+		if (args.length==1) period = Integer.valueOf((String) args[0]);
+		else period = 3000;
+				
+		RainTicker t = new RainTicker(this, period);
 		addBehaviour(t);
 		
 		MessageReceiver mR = new MessageReceiver(this);

@@ -30,7 +30,7 @@ public class WaterMass implements Serializable {
 		
 		r = new Random();		
 		setVolume(500 + 500*r.nextDouble());
-		setCapacity(1000);
+		setCapacity(2000);
 		
 		setSuspendedSolids(0);
 		setChemicalOxygenDemand(0);
