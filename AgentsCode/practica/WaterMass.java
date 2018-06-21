@@ -12,8 +12,8 @@ public class WaterMass implements Serializable {
 	// Each WaterMass has a volume and a capacity. 
 	// It represents the water that flows through a section of a river.
 	// We assume that every WaterMass has a capacity of 1000
-	// The volume depends on a fixed amount of 500l plus a variable amount that
-	// ranges from 0l to 500l. 
+	// The volume depends on a fixed amount of 500m^3 plus a variable amount that
+	// ranges from 0m^3 to 500m^3. 
 	
 	private double volume;
 	private double capacity;

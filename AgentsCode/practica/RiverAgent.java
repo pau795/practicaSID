@@ -133,7 +133,7 @@ public class RiverAgent extends Agent{
 							for(WaterMass a: river) {
 								WaterMass.mergeWater(m, a);
 							}
-							System.out.println("The rain has filled the river with " +v + " liters of water on each section");
+							System.out.println("The rain has filled the river with " +v + " cubic meters of water on each section");
 						}
 					}
 					

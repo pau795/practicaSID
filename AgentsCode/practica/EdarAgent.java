@@ -43,7 +43,7 @@ public class EdarAgent extends Agent{
 						purifiedWater = WaterMass.mergeWater(waterToPurify, purifiedWater);
 						waterToPurify = new WaterMass(0,0,0,0,0,0);
 						waterToPurify.setCapacity(MaxPurifiableCapacity);
-						System.out.println("EDAR purified water tank has " + purifiedWater.getVolume() + " liters of water");
+						System.out.println("EDAR purified water tank has " + purifiedWater.getVolume() + " cubic meters of water");
 					}
 					else System.out.println("EDAR purified water tank can not recive more water");
 				}
@@ -94,7 +94,7 @@ public class EdarAgent extends Agent{
 					e.printStackTrace();
 				}
 				send(msg);
-				System.out.println("The EDAR is trying to pour " + m.getVolume() +" liters of water to the river");
+				System.out.println("The EDAR is trying to pour " + m.getVolume() +" cubic meters of water to the river");
 				boolean answer = false;
 				while (!answer) {
 					ACLMessage msg2 = blockingReceive(3000);
@@ -107,7 +107,7 @@ public class EdarAgent extends Agent{
 						purifiedWater.setBiologicalOxygenDemand(purifiedWater.getBiologicalOxygenDemand()-m.getBiologicalOxygenDemand());
 						purifiedWater.setTotalNitrates(purifiedWater.getTotalNitrates()-m.getTotalNitrates());
 						purifiedWater.setTotalSulfites(purifiedWater.getTotalSulfites()-m.getTotalSulfites());
-						System.out.println("EDAR has poured " + m.getVolume() + " liters to the river successfully");
+						System.out.println("EDAR has poured " + m.getVolume() + " cubic meters to the river successfully");
 					}
 					else System.out.println("Is not possible to pour water to the river");
 				}
@@ -129,11 +129,17 @@ public class EdarAgent extends Agent{
 	}
 	
 	//This method decides which WaterMass is going to be purified.
-	//If there is a WaterMass on the procces of being purified, it chooses that one.
-	//Otherwise, it gets a portion of the polluted water tank, trying to maximize the maximum purifiable volume
+	//If there is a WaterMass on the procces of being purified, it tries to maximize the maximum purificable capacity merging the water.
+	//Otherwise, it gets a portion of the polluted water tank, trying to maximize the maximum purifiable capacity
 	private WaterMass getWater() {
 		WaterMass m;
-		if (waterToPurify.getVolume()>0) m=waterToPurify;
+		if (waterToPurify.getVolume()>0) {
+			double v = waterToPurify.getAvailableVolume();
+			double v2 = Double.min(pollutedWater.getVolume(), v);
+			WaterMass wm = pollutedWater.getPortion(v2);
+			m = WaterMass.mergeWater(wm, waterToPurify);
+			pollutedWater.substractWaterMass(wm);
+		}
 		else if (pollutedWater.getVolume()>waterToPurify.getCapacity()) {
 			double ratio = waterToPurify.getCapacity()/pollutedWater.getVolume();
 			double v = waterToPurify.getCapacity();
@@ -181,7 +187,7 @@ public class EdarAgent extends Agent{
 	    protected void handlePropose(ACLMessage propose,  Vector v) {
 	    	try {
 				WaterMass m = (WaterMass) propose.getContentObject();
-				System.out.println("EDAR has resgistered industry "+propose.getSender().getLocalName()+" proposal of "+m.getVolume() + " liters of water");
+				System.out.println("EDAR has resgistered industry "+propose.getSender().getLocalName()+" proposal of "+m.getVolume() + " cubic meters of water");
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
@@ -259,8 +265,8 @@ public class EdarAgent extends Agent{
         	try {
 				WaterMass m =(WaterMass) inform.getContentObject();
 				WaterMass.mergeWater(m, pollutedWater);
-	        	System.out.println("Industry "+inform.getSender().getLocalName()+" has successfully dumped "+ m.getVolume() + " liters of water");
-	        	System.out.println("EDAR polluted water tank has " + pollutedWater.getVolume()+" liters of water");
+	        	System.out.println("Industry "+inform.getSender().getLocalName()+" has successfully dumped "+ m.getVolume() + " cubic meters of water");
+	        	System.out.println("EDAR polluted water tank has " + pollutedWater.getVolume()+" cubic meters of water");
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
@@ -301,7 +307,7 @@ public class EdarAgent extends Agent{
 								reply.setConversationId("dump");
 								send(reply);
 								System.out.println("The EDAR has received a water mass from " + msg.getSender().getLocalName() + " succesfully");
-								System.out.println("EDAR polluted water tank has " + pollutedWater.getVolume()+" liters of water");
+								System.out.println("EDAR polluted water tank has " + pollutedWater.getVolume()+" cubic meters of water");
 							}
 							
 							// EDAR refuses receiving such a Mass
@@ -372,6 +378,10 @@ public class EdarAgent extends Agent{
 						reply.setPerformative(ACLMessage.CONFIRM);
 						send(reply);
 						System.out.println("EDAR has registered industry " + msg.getSender().getLocalName());
+					}
+					else if (msg.getConversationId().equals("down")) {
+						industries.remove(msg.getSender());
+						System.out.println("EDAR has removed industry " +msg.getSender().getLocalName()+" from his list");
 					}
 					
 					else if(msg.getConversationId().equals("GUI")){

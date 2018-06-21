@@ -27,7 +27,7 @@ public class RainAgent extends Agent{
 			if (rain) {
 				raining();
 			}
-			else if (r.nextDouble() < 0.5) { 		//random chance to start raining
+			else if (r.nextDouble() < 0.2) { 		//random chance to start raining
 				rainTick=0;
 				rain=true;
 				System.out.println("It has started to rain");
@@ -60,16 +60,16 @@ public class RainAgent extends Agent{
 							e.printStackTrace();
 						}
 						send(msg3);			
-						System.out.println("Meteorologic water tank requesting to dump " + waterToDump.getVolume() + " liters of water to the EDAR");
+						System.out.println("Meteorologic water tank requesting to dump " + waterToDump.getVolume() + " cubic meters of water to the EDAR");
 	
 						// The tank waits for the confirmation that the water to dump has been dumped
 						MessageTemplate template2 = MessageTemplate.MatchPerformative(ACLMessage.CONFIRM);
 						ACLMessage msg4 = myAgent.receive(template2);
 						if(msg4 != null) {
 							if(msg4.getPerformative() == ACLMessage.CONFIRM && msg4.getConversationId() != null && msg4.getConversationId().equals("dump")) {
-								System.out.println("Industry " + getLocalName() + " dumps " + waterToDump.getVolume() + " liters of water to the EDAR");
+								System.out.println("Industry " + getLocalName() + " dumps " + waterToDump.getVolume() + " cubic meters of water to the EDAR");
 								meteorologicWaterTank.substractWaterMass(waterToDump);
-								System.out.println("The meteorologic water tank stores " + meteorologicWaterTank.getVolume() + " liters of water after the dump");
+								System.out.println("The meteorologic water tank stores " + meteorologicWaterTank.getVolume() + " cubic meters of water after the dump");
 							}
 						} else block(2000);
 					}
@@ -122,7 +122,7 @@ public class RainAgent extends Agent{
 		
 		if (meteorologicWaterTank.getAvailableVolume()>= waterVolume) {
 			WaterMass.mergeWater(new WaterMass(waterVolume,0,0,0,0,0), meteorologicWaterTank);
-			System.out.println("The meteorologic water tank contains " +waterVolume+ " liters of water");
+			System.out.println("The meteorologic water tank contains " +waterVolume+ " cubic meters of water");
 		}
 		else System.out.println("The meteorologic water tank is full and cannot recive more water");
 		
@@ -132,7 +132,7 @@ public class RainAgent extends Agent{
 		msg.addUserDefinedParameter("rain", String.valueOf(waterVolume));
 		send(msg);
 				
-		System.out.println("Its raining " + waterVolume +" liters of water per section");
+		System.out.println("Its raining " + waterVolume +" cubic meters of water per section");
 		if (rainTick >= minRainTicks && rainTick < maxRainTicks) {
 			int n = r.nextInt(maxRainTicks-rainTick);
 			if (n==0) {
