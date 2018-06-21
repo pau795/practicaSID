@@ -133,12 +133,15 @@ public class EdarAgent extends Agent{
 	//Otherwise, it gets a portion of the polluted water tank, trying to maximize the maximum purifiable capacity
 	private WaterMass getWater() {
 		WaterMass m;
-		if (waterToPurify.getVolume()>0) {
-			double v = waterToPurify.getAvailableVolume();
-			double v2 = Double.min(pollutedWater.getVolume(), v);
-			WaterMass wm = pollutedWater.getPortion(v2);
-			m = WaterMass.mergeWater(wm, waterToPurify);
-			pollutedWater.substractWaterMass(wm);
+		if (waterToPurify.getVolume()>0 ) {
+			if (pollutedWater.getVolume()> 0) {
+				double v = waterToPurify.getAvailableVolume();
+				double v2 = Double.min(pollutedWater.getVolume(), v);
+				WaterMass wm = pollutedWater.getPortion(v2);
+				m = WaterMass.mergeWater(wm, waterToPurify);
+				pollutedWater.substractWaterMass(wm);
+			}
+			else m = waterToPurify;
 		}
 		else if (pollutedWater.getVolume()>waterToPurify.getCapacity()) {
 			double ratio = waterToPurify.getCapacity()/pollutedWater.getVolume();
